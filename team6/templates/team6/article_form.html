@@ -1,0 +1,29 @@
+{% extends "team6/base.html" %}
+{% block title %}{{ article.title_fa if article else "ایجاد مقاله" }}{% endblock %}
+{% load static %}
+
+{% block content %}
+<h2>{{ article.title_fa if article else "ایجاد مقاله" }}</h2>
+<form method="POST">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.title_fa.label_tag }} {{ form.title_fa }}
+    </div>
+    <div class="mb-3">
+        {{ form.place_name.label_tag }} {{ form.place_name }}
+    </div>
+    <div class="mb-3">
+        {{ form.slug.label_tag }} {{ form.slug }}
+    </div>
+    <div class="mb-3">
+        {{ form.category.label_tag }} {{ form.category }}
+    </div>
+    <div class="mb-3">
+        {{ form.summary.label_tag }} {{ form.summary }}
+    </div>
+    <div class="mb-3">
+        {{ form.body_fa.label_tag }} {{ form.body_fa }}
+    </div>
+    <button type="submit" class="btn btn-success">ذخیره</button>
+</form>
+{% endblock %}

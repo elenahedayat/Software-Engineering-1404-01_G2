@@ -1,153 +1,173 @@
 from django.http import JsonResponse
-from django.shortcuts import render
-from core.auth import api_login_required
-from .models import *
-# from .serializers import *
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView
 from django.db.models import Q
-from .models import WikiArticle, WikiCategory, WikiTag, WikiArticleRevision, WikiArticleReports
-from django.utils import timezone
-
-from django.http import JsonResponse
-from .models import WikiArticle
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+import uuid
+from .models import WikiArticle, WikiCategory, WikiArticleRevision, WikiArticleReports
 
 TEAM_NAME = "team6"
 
 # --- Base views ---
-@api_login_required
 def ping(request):
     return JsonResponse({"team": TEAM_NAME, "ok": True})
 
 def base(request):
-    articles = WikiArticle.objects.using(TEAM_NAME).filter(status='published')
-    return render(request, f"{TEAM_NAME}/index.html", {"articles": articles})
+    articles = WikiArticle.objects.filter(status='published')
+    return render(request, "team6/index.html", {"articles": articles})
 
-# 2 & 7. Article list + keyword search + category filter (requirement 12)
+# لیست مقالات
 class ArticleListView(ListView):
     model = WikiArticle
     template_name = 'team6/article_list.html'
     context_object_name = 'articles'
 
     def get_queryset(self):
-        queryset = WikiArticle.objects.using('team6').filter(status='published')
+        queryset = WikiArticle.objects.filter(status='published')
         q = self.request.GET.get('q')
         cat = self.request.GET.get('category')
-        tag = self.request.GET.get('tag')
+        search_type = self.request.GET.get('search_type', 'direct')
 
-        if q:  # Direct keyword or phrase search
-            queryset = queryset.filter(Q(title_fa__icontains=q) | Q(body_fa__icontains=q))
-        if cat:  # Category filter
+        if q:  # جستجوی مستقیم یا معنایی
+            if search_type == 'semantic':
+                queryset = queryset.filter(
+                    Q(title_fa__icontains=q) | 
+                    Q(body_fa__icontains=q) |
+                    Q(summary__icontains=q)
+                ).distinct()
+            else:  # جستجوی مستقیم
+                queryset = queryset.filter(
+                    Q(title_fa__icontains=q) | 
+                    Q(body_fa__icontains=q)
+                )
+        
+        if cat:  # فیلتر دسته‌بندی
             queryset = queryset.filter(category__slug=cat)
-        if tag:  # Search by tag (requirement 6)
-            queryset = queryset.filter(tags__slug=tag)
             
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = WikiCategory.objects.using('team6').all()
-        context['tags'] = WikiTag.objects.using('team6').all()
+        context['categories'] = WikiCategory.objects.all()
         return context
 
-# 3. Create article
+# ایجاد مقاله
 class ArticleCreateView(CreateView):
     model = WikiArticle
     fields = ['title_fa', 'place_name', 'slug', 'body_fa', 'category', 'summary']
     template_name = 'team6/article_form.html'
     success_url = '/team6/'
-    login_url = '/auth/'
 
     def form_valid(self, form):
-        # form.instance.status = 'published'
-        
-        # return super().form_valid(form)
         article = form.save(commit=False)
-
-        # Logged-in user info from central authentication service
-        article.author_user_id = self.request.user.id
-        article.last_editor_user_id = self.request.user.id
+        
+        # اگر کاربر لاگین کرده باشد
+        if self.request.user.is_authenticated:
+            article.author_user_id = self.request.user.id
+            article.last_editor_user_id = self.request.user.id
+        
         article.status = 'published'
-
-        # Save to team database
-        article.save(using='team6')
-        form.save_m2m()
-
+        article.save()
+        
         return redirect(self.success_url)
 
-# 4. Edit article (with creating a new revision - requirement 8)
+# ویرایش مقاله
 def edit_article(request, slug):
-    article = get_object_or_404(WikiArticle.objects.using('team6'), slug=slug)
-    if request.method == "POST":
-        # Before updating, save the current version into revision history
-        WikiArticleRevision.objects.using('team6').create(
-            article=article,
-            revision_no=article.current_revision_no,
-            body_fa=article.body_fa,
-            change_note=request.POST.get('change_note', 'No note')
-        )
-        # Update article
-        article.body_fa = request.POST.get('body_fa')
-        article.current_revision_no += 1
-        article.save(using='team6')
-        return redirect('article_detail', slug=article.slug)
+    article = get_object_or_404(WikiArticle, slug=slug)
     
-    return render(request, 'team6/article_edit.html', {'article': article})
-
-# 5. Report article
-def report_article(request, pk):
     if request.method == "POST":
-        article = get_object_or_404(WikiArticle.objects.using('team6'), pk=pk)
-        WikiArticleReports.objects.using('team6').create(
+        # ذخیره نسخه قبلی در تاریخچه
+        current_rev = getattr(article, 'current_revision_no', 0) or 0
+        
+        WikiArticleRevision.objects.create(
             article=article,
-            reporter_user_id=request.user.id if request.user.is_authenticated else uuid.uuid4(),
-            report_type=request.POST.get('type'),
-            description=request.POST.get('desc')
+            revision_no=current_rev + 1,
+            body_fa=article.body_fa,
+            change_note=request.POST.get('change_note', 'ویرایش بدون توضیح')
         )
-        return JsonResponse({"status": "success"})
+        
+        # آپدیت مقاله
+        article.title_fa = request.POST.get('title_fa', article.title_fa)
+        article.body_fa = request.POST.get('body_fa', article.body_fa)
+        article.summary = request.POST.get('summary', article.summary)
+        article.current_revision_no = current_rev + 2
+        
+        if self.request.user.is_authenticated:
+            article.last_editor_user_id = self.request.user.id
+            
+        article.save()
+        return redirect('team6:article_detail', slug=article.slug)
+    
+    return render(request, 'team6/article_form.html', {'article': article})
 
-# 8. Show article revisions
+# گزارش مقاله (با slug)
+def report_article(request, slug):
+    article = get_object_or_404(WikiArticle, slug=slug)
+    
+    if request.method == "POST":
+        reporter_id = request.user.id if request.user.is_authenticated else uuid.uuid4()
+        
+        WikiArticleReports.objects.create(
+            article=article,
+            reporter_user_id=reporter_id,
+            report_type=request.POST.get('type', 'other'),
+            description=request.POST.get('desc', '')
+        )
+        return JsonResponse({"status": "success", "message": "گزارش با موفقیت ثبت شد"})
+    
+    return render(request, 'team6/article_report.html', {'article': article})
+
+# نمایش نسخه‌ها
 def article_revisions(request, slug):
-    article = get_object_or_404(WikiArticle.objects.using('team6'), slug=slug)
-    revisions = WikiArticleRevision.objects.using('team6').filter(article=article).order_now('-created_at')
-    return render(request, 'team6/revisions.html', {'article': article, 'revisions': revisions})
+    article = get_object_or_404(WikiArticle, slug=slug)
+    revisions = WikiArticleRevision.objects.filter(article=article).order_by('-created_at')
+    return render(request, 'team6/article_revisions.html', {
+        'article': article, 
+        'revisions': revisions
+    })
 
-# 10 & 11. Article detail view + summarization (LLM)
+# نمایش جزئیات مقاله
 def article_detail(request, slug):
-    article = get_object_or_404(WikiArticle.objects.using('team6'), slug=slug)
-    article.view_count += 1
-    article.save()
+    article = get_object_or_404(WikiArticle, slug=slug)
+    
+    # افزایش بازدید
+    if hasattr(article, 'view_count'):
+        article.view_count += 1
+        article.save()
+    
     return render(request, 'team6/article_detail.html', {'article': article})
 
-
+# API برای محتوای ویکی
 def get_wiki_content(request):
     place_query = request.GET.get('place', None)
     
     if not place_query:
-        return JsonResponse({"error": "place parameter is required"}, status=400)
+        return JsonResponse({"error": "پارامتر place الزامی است"}, status=400)
     
-    # Search by place name or title (direct search requirement)
-    article = WikiArticle.objects.using('team6').filter(
-        Q(place_name__icontains=place_query) | Q(title_fa__icontains=place_query)
+    # جستجو بر اساس نام مکان یا عنوان
+    article = WikiArticle.objects.filter(
+        Q(place_name__icontains=place_query) | 
+        Q(title_fa__icontains=place_query)
     ).first()
 
     if not article:
-        return JsonResponse({"message": "No content found for this place"}, status=404)
+        return JsonResponse({"message": "محتوایی برای این مکان یافت نشد"}, status=404)
 
-    # Build response according to the agreed format between teams
+    # ساخت خروجی
     data = {
-        "id": str(article.id_article),
+        "id": str(article.id) if hasattr(article, 'id') else str(article.slug),
         "title": article.title_fa,
         "place_name": article.place_name,
-        "category": article.category.title_fa,
-        "tags": list(article.tags.values_list('title_fa', flat=True)),
-        "summary": article.summary,
+        "category": article.category.title_fa if article.category else "",
+        "tags": list(article.tags.values_list('title_fa', flat=True)) if hasattr(article, 'tags') else [],
+        "summary": article.summary if hasattr(article, 'summary') else "",
         "description": article.body_fa,
-        "images": [article.featured_image_url] if article.featured_image_url else [],
-        "url": article.url,
-        "updated_at": article.updated_at.isoformat()
+        "url": f"/team6/article/{article.slug}/",
+        "updated_at": article.updated_at.isoformat() if hasattr(article, 'updated_at') else ""
     }
+    
+    # اضافه کردن تصویر اگر وجود دارد
+    if hasattr(article, 'featured_image_url') and article.featured_image_url:
+        data["images"] = [article.featured_image_url]
+    
     return JsonResponse(data)
