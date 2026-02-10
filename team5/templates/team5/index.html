@@ -48,6 +48,7 @@
                 <button data-action="users">Registered Users</button>
                 <button data-action="user-ratings">User Ratings (DB)</button>
                 <button data-action="popular">Popular</button>
+                <button data-action="nearest">Your Nearest</button>
                 <button data-action="personalized">Personalized</button>
                 <button data-action="interests">User Interests</button>
                 <button data-action="ping">Ping (auth required)</button>
@@ -72,6 +73,7 @@
                 <li>در اکشن <code>Media (User View)</code> لیست کلی + امتیازهای بالا/پایین همان کاربر نمایش داده می‌شود.</li>
                 <li>در این میکروسرویس امتیاز جدید ثبت نمی‌شود؛ فقط از امتیازهای موجود استفاده می‌کنیم.</li>
                 <li>برای Places by City مقدار <code>City ID</code> را تنظیم کن (مثل: tehran, isfahan).</li>
+                <li>در <code>Your Nearest</code> ابتدا IP فعلی کاربر بررسی می‌شود؛ اگر تشخیص نشد از <code>City ID</code> به‌عنوان fallback استفاده می‌شود.</li>
                 <li>برای Ping باید قبلا لاگین کرده باشی تا 200 بگیری.</li>
             </ul>
         </section>
@@ -101,6 +103,12 @@
             users: () => api("/team5/api/users/"),
             "user-ratings": () => api(`/team5/api/users/${encodeURIComponent(userIdInput.value.trim())}/ratings/`),
             popular: () => api(`/team5/api/recommendations/popular/?limit=${safeLimit()}`),
+            nearest: () =>
+                api(
+                    `/team5/api/recommendations/nearest/?limit=${safeLimit()}&cityId=${encodeURIComponent(
+                        cityIdInput.value.trim()
+                    )}`
+                ),
             personalized: () =>
                 api(`/team5/api/recommendations/personalized/?userId=${encodeURIComponent(userIdInput.value.trim())}&limit=${safeLimit()}`),
             interests: () => api(`/team5/api/users/${encodeURIComponent(userIdInput.value.trim())}/interests/`),
@@ -305,6 +313,7 @@
         function mapReason(reasonKey) {
             const labels = {
                 high_user_rating: "به خاطر امتیاز بالای کاربر",
+                your_nearest: "نزدیک‌ترین پیشنهاد براساس موقعیت شما",
                 similar_topic: "پیشنهاد مشابه موضوعی",
                 same_city: "پیشنهاد مشابه در همان شهر",
                 similar: "پیشنهاد مشابه"
@@ -319,6 +328,7 @@
                 places: "Places",
                 media: "Media",
                 popular: "Popular",
+                nearest: "Your Nearest",
                 personalized: "Personalized",
                 interests: "Interests",
                 "user-ratings": "User Ratings"

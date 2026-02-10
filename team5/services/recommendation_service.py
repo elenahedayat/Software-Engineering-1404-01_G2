@@ -40,6 +40,21 @@ class RecommendationService:
         filtered.sort(key=lambda item: (float(item["overallRate"]), int(item["ratingsCount"])), reverse=True)
         return filtered[:limit]
 
+    def get_nearest_by_city(self, city_id: str, limit: int = DEFAULT_LIMIT) -> list[MediaRecord]:
+        place_by_id = {place["placeId"]: place for place in self.provider.get_all_places()}
+        items: list[dict] = []
+
+        for media in self.provider.get_media():
+            place = place_by_id.get(media["placeId"])
+            if not place or place["cityId"] != city_id:
+                continue
+            item = dict(media)
+            item["matchReason"] = "your_nearest"
+            items.append(item)
+
+        items.sort(key=lambda item: (float(item["overallRate"]), int(item["ratingsCount"])), reverse=True)
+        return items[:limit]
+
     def get_personalized(self, user_id: str, limit: int = DEFAULT_LIMIT) -> list[MediaRecord]:
         media = [dict(item) for item in self.provider.get_media()]
         media_by_id = {item["mediaId"]: item for item in media}

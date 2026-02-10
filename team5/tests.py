@@ -109,6 +109,24 @@ class Team5RecommendationApiTests(TestCase):
             self.assertGreaterEqual(item["overallRate"], 4.0)
             self.assertGreaterEqual(item["ratingsCount"], 5)
 
+    def test_nearest_recommendations_with_city_override(self):
+        res = self.client.get("/team5/api/recommendations/nearest/?cityId=tehran&limit=10")
+        self.assertEqual(res.status_code, 200)
+        payload = res.json()
+        self.assertEqual(payload["kind"], "nearest")
+        self.assertEqual(payload["title"], "your nearest")
+        self.assertEqual(payload["source"], "manual_city_override")
+        self.assertEqual(payload["cityId"], "tehran")
+        self.assertGreaterEqual(payload["count"], 1)
+        self.assertTrue(all(item["matchReason"] == "your_nearest" for item in payload["items"]))
+
+    def test_nearest_recommendations_requires_resolvable_location(self):
+        res = self.client.get("/team5/api/recommendations/nearest/")
+        self.assertEqual(res.status_code, 400)
+        payload = res.json()
+        self.assertEqual(payload["kind"], "nearest")
+        self.assertEqual(payload["source"], "unresolved")
+
     def test_personalized_recommendations_rank_for_user(self):
         res = self.client.get(f"/team5/api/recommendations/personalized/?userId={self.user_main.id}&limit=10")
         self.assertEqual(res.status_code, 200)

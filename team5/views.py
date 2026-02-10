@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from core.auth import api_login_required
 from .services.contracts import DEFAULT_LIMIT
 from .services.db_provider import DatabaseProvider
+from .services.location_service import get_client_ip, resolve_client_city
 from .services.recommendation_service import RecommendationService
 
 TEAM_NAME = "team5"
@@ -47,6 +48,49 @@ def get_popular_recommendations(request):
     return JsonResponse(
         {
             "kind": "popular",
+            "limit": limit,
+            "count": len(items),
+            "items": items,
+        }
+    )
+
+
+@require_GET
+def get_nearest_recommendations(request):
+    limit = _parse_limit(request)
+    city_override = request.GET.get("cityId")
+    ip_override = request.GET.get("ip")
+
+    client_ip = get_client_ip(request, ip_override=ip_override)
+    resolved = resolve_client_city(
+        cities=provider.get_cities(),
+        client_ip=client_ip,
+        preferred_city_id=city_override,
+    )
+    if not resolved:
+        return JsonResponse(
+            {
+                "kind": "nearest",
+                "source": "unresolved",
+                "clientIp": client_ip,
+                "detail": "Could not resolve user city from IP. Provide cityId query param for local testing.",
+                "items": [],
+                "count": 0,
+                "limit": limit,
+            },
+            status=400,
+        )
+
+    city = resolved["city"]
+    items = recommendation_service.get_nearest_by_city(city_id=city["cityId"], limit=limit)
+    return JsonResponse(
+        {
+            "kind": "nearest",
+            "title": "your nearest",
+            "source": resolved["source"],
+            "clientIp": client_ip,
+            "cityId": city["cityId"],
+            "cityName": city["cityName"],
             "limit": limit,
             "count": len(items),
             "items": items,
