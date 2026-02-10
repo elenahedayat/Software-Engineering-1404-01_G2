@@ -1,4 +1,4 @@
-# AI Service
+<!-- # AI Service
 
 FastAPI service for AI model inference.
 
@@ -71,4 +71,4 @@ Place these files in the `ai-service/models/` directory:
 
 ## For AI Team Members
 
-The actual model implementation goes in `models.py`. The current `main.py` provides placeholder responses for integration testing.
+The actual model implementation goes in `models.py`. The current `main.py` provides placeholder responses for integration testing. -->
