@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ایجاد برنامه سفر | ایران‌نما</title>
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- تقویم شمسی -->
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@latest/dist/css/persian-datepicker.min.css">
+
+    <!-- استایل اختصاصی این صفحه -->
+    <link rel="stylesheet" href="{% static 'team10/styles/create-trip.css' %}">
+</head>
+<body>
+
+    <div class="bg-pattern"></div>
+
+    <header class="main-header">
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fa-solid fa-leaf"></i>
+                <div class="logo-text">
+                    <h1>ایران‌نما</h1>
+                    <span>سامانه هوشمند گردشگری</span>
+                </div>
+            </div>
+            <div class="auth-buttons">
+                {% if request.user.is_authenticated %}
+                    <form method="post" action="/auth/logout/" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-login">خروج</button>
+                    </form>
+                {% else %}
+                    <a href="/auth/" class="btn btn-login">ورود</a>
+                    <a href="/auth/signup/" class="btn btn-login">ثبت‌نام</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <section class="hero hero-custom">
+        <div class="hero-content">
+            <h2>برنامه‌ریزی سفر هوشمند</h2>
+            <p>سفری شخصی‌سازی‌شده بر اساس علایق و سابقه شما</p>
+        </div>
+    </section>
+
+    <main class="container dashboard">
+        <div class="section-header">
+            <h3>ایجاد سفر جدید</h3>
+            <div class="line"></div>
+        </div>
+
+        <form id="create-trip-form" class="auth-card">
+            <!-- مقصد -->
+            <div class="form-group">
+                <label for="destination">مقصد <span class="required">*</span></label>
+                <input type="text" id="destination" name="destination" placeholder="مثال: اصفهان، شیراز، کیش، مشهد..." required autocomplete="off">
+            </div>
+
+            <!-- تاریخ‌ها -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="start-date">تاریخ شروع <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <input type="text" id="start-date" name="start_date_jalali" class="persian-date jalali-input" placeholder="۱۴۰۴/۱۱/۲۲" required autocomplete="off">
+                        <i class="fas fa-calendar-alt calendar-icon"></i>
+                    </div>
+                    <input type="hidden" name="start_date" id="start-date-gregorian">
+                </div>
+
+                <div class="form-group">
+                    <label for="end-date">تاریخ پایان <span class="required">*</span></label>
+                    <div class="input-with-icon">
+                        <input type="text" id="end-date" name="end_date_jalali" class="persian-date jalali-input" placeholder="۱۴۰۴/۱۲/۰۵" required autocomplete="off">
+                        <i class="fas fa-calendar-alt calendar-icon"></i>
+                    </div>
+                    <input type="hidden" name="end_date" id="end-date-gregorian">
+                </div>
+            </div>
+
+
+            <!-- تعداد نفرات -->
+            <div class="form-group">
+                <label for="travelers">تعداد مسافران</label>
+                <select id="travelers" name="travelers_count">
+                    <option value="1">۱ نفر (تنها)</option>
+                    <option value="2" selected>۲ نفر</option>
+                    <option value="3">۳ نفر</option>
+                    <option value="4">۴ نفر</option>
+                    <option value="5+">۵ نفر یا بیشتر</option>
+                </select>
+            </div>
+
+            <!-- سبک و ترجیحات اصلی (چندگزینه‌ای) -->
+            <div class="form-group">
+                <label>سبک سفر من (می‌توانید چند مورد انتخاب کنید)</label>
+                <div class="chips-container">
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="nature"> طبیعت‌گردی
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="history"> تاریخی و فرهنگی
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="food"> غذاشناسی و رستوران‌گردی
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="relax"> آرامش و استراحت
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="adventure"> ماجراجویی و هیجانی
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="shopping"> خرید و بازارگردی
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="preferences" value="nightlife"> تفریحات شبانه
+                    </label>
+                </div>
+            </div>
+
+            <!-- بودجه تقریبی -->
+            <div class="form-group">
+                <label for="budget">بودجه تقریبی کل سفر (به تومان)</label>
+                <input type="number" id="budget" name="budget" placeholder="مثال: ۱۵۰۰۰۰۰۰" min="1000000">
+            </div>
+
+            <!-- دکمه ارسال -->
+            <div class="form-actions">
+                <button type="submit" class="auth-btn btn-submit-signup" id="submit-btn">
+                    <i class="fas fa-magic"></i> ساخت برنامه سفر هوشمند
+                </button>
+                <p class="loading-text" id="loading">
+                    <i class="fas fa-spinner fa-spin"></i> در حال ساخت برنامه شخصی‌سازی‌شده...
+                </p>
+            </div>
+        </form>
+
+        <div id="result-area" class="result-area auth-card">
+            <h2>برنامه سفر شما آماده است!</h2>
+            <div id="result-content"></div>
+            <button class="auth-btn btn-submit-login" onclick="window.location.reload()">سفر جدید</button>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; ۱۴۰۴ - پروژه مهندسی نرم‌افزار ۱ | دانشگاه صنعتی امیرکبیر</p>
+    </footer>
+
+    <!-- اسکریپت‌های مورد نیاز -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/persian-date@latest/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@latest/dist/js/persian-datepicker.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            const datePickerOptions = {
+                observer: true,
+                format: 'YYYY/MM/DD',
+                autoClose: true,
+                initialValue: false,
+                toolbox: {
+                    calendarSwitch: { enabled: false }
+                },
+                timePicker: { enabled: false },
+                onSelect: function(unix) {
+                    // تبدیل به میلادی (برای backend اگر لازم بود)
+                    let pd = new window.persianDate(unix);   // window. اضافه شد برای اطمینان
+                    let greg = pd.toGregorian();
+                    let gDate = greg.year + '-' + ('0' + greg.month).slice(-2) + '-' + ('0' + greg.day).slice(-2);
+
+                    if (this._targetInput.id === 'start-date') {
+                        $('#start-date-gregorian').val(gDate);
+                    } else if (this._targetInput.id === 'end-date') {
+                        $('#end-date-gregorian').val(gDate);
+                    }
+                }
+            };
+
+            // اعمال تقویم
+            $('#start-date').persianDatepicker(datePickerOptions);
+            $('#end-date').persianDatepicker(datePickerOptions);
+
+            // باز کردن تقویم روی فوکوس (خیلی موثر است)
+            $('.jalali-input').on('focus', function() {
+                $(this).persianDatepicker('show');
+            });
+
+            // کلیک روی آیکون تقویم → فوکوس روی input
+            $('.calendar-icon').on('click', function() {
+                $(this).siblings('.jalali-input').focus();
+            });
+
+            // محدود کردن minDate برای پایان
+            $('#start-date').on('change', function() {
+                let startVal = $(this).val();
+                if (startVal) {
+                    $('#end-date').persianDatepicker('option', 'minDate', startVal);
+                }
+            });
+
+            // جلوگیری نرم از تایپ دستی (اختیاری - اگر می‌خواهید کاملاً غیرفعال کنید، preventDefault را برگردانید)
+            $('.jalali-input').on('keydown', function(e) {
+                // اگر می‌خواهید تایپ کاملاً ممنوع باشد:
+                // e.preventDefault();
+                // اما برای تجربه بهتر، فعلاً اجازه می‌دهیم (کاربر می‌تواند دستی وارد کند)
+            });
+        });
+
+        const form = document.getElementById('create-trip-form');
+        const loading = document.getElementById('loading');
+        const resultArea = document.getElementById('result-area');
+        const resultContent = document.getElementById('result-content');
+        const submitBtn = document.getElementById('submit-btn');
+
+        loading.style.display = 'none';
+        resultArea.style.display = 'none';
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            resultArea.style.display = 'none';
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            data.preferences = formData.getAll('preferences');
+
+            try {
+                const response = await fetch('/team10/create-trip/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    resultContent.innerHTML = `
+                        <p class="success-message">سفر با موفقیت ایجاد شد!</p>
+                        <p>شناسه سفر: <strong>${result.trip_id || '—'}</strong></p>
+                        <p>وضعیت: ${result.status === 'DRAFT' ? 'پیش‌نویس' : result.status}</p>
+                        <a href="/team10/trip/${result.trip_id || ''}" class="btn btn-login">مشاهده برنامه سفر</a>
+                    `;
+                } else {
+                    resultContent.innerHTML = `<p class="error-message">خطا: ${result.error || 'مشکلی پیش آمد'}</p>`;
+                }
+            } catch (err) {
+                resultContent.innerHTML = `<p class="error-message">اتصال به سرور برقرار نشد</p>`;
+            } finally {
+                loading.style.display = 'none';
+                resultArea.style.display = 'block';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+</html>
