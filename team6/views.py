@@ -16,10 +16,15 @@ from django.http import JsonResponse
 import json
 from django.views.decorators.csrf import csrf_exempt
 from .services.llm_service import FreeAIService
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.metrics.pairwise import cosine_similarity
 import logging
 from django.http import Http404
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from .services.semantic_search import SemanticSearchService
+
+
 
 # تنظیم لاگر برای چاپ در ترمینال
 logger = logging.getLogger(__name__)
@@ -72,41 +77,17 @@ class ArticleListView(ListView):
             if not articles:
                 return queryset.none()
 
-            # 1️⃣ ساخت متن هر مقاله
-            documents = [
-                f"{a.title_fa} {a.body_fa} {a.summary or ''}"
-                for a in articles
-            ]
+            semantic_service = SemanticSearchService()
 
-            # 2️⃣ TF-IDF
-            vectorizer = TfidfVectorizer(
-                ngram_range=(1, 2),
-                max_features=5000
+            ranked_articles = semantic_service.search(
+                articles=articles,
+                query=q,
+                k=10
             )
-            tfidf_matrix = vectorizer.fit_transform(documents)
 
-            # 3️⃣ بردار کوئری
-            query_vec = vectorizer.transform([q])
-
-            # 4️⃣ cosine similarity
-            similarity_scores = cosine_similarity(query_vec, tfidf_matrix)[0]
-
-            # 5️⃣ الصاق نمره به مقاله
-            scored_articles = list(zip(articles, similarity_scores))
-
-            # 6️⃣ فیلتر + سورت
-            scored_articles = [
-                (article, score)
-                for article, score in scored_articles
-                if score > 0.00
-            ]
-
-            scored_articles.sort(key=lambda x: x[1], reverse=True)
-
-            # فقط خود مقاله‌ها
-            return [article for article, _ in scored_articles]
-
-        # ---------- سرچ مستقیم ----------
+            # فقط خود مقاله‌ها به ترتیب شباهت معنایی
+            return [article for article, score in ranked_articles]
+            # ---------- سرچ مستقیم ----------
         if q:
             queryset = queryset.filter(
                 Q(title_fa__icontains=q) |
