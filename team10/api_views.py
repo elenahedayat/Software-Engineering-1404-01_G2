@@ -16,7 +16,6 @@ def create_trip_api(request):
     try:
         # Parse JSON data
         data = json.loads(request.body)
-
         # Validate required fields
         required_fields = ['destination', 'start_date', 'end_date']
         for field in required_fields:
