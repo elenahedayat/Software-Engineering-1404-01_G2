@@ -40,6 +40,7 @@ services:
 
   team11_postgres:
     image: postgres:15-alpine
+    platform: linux/amd64
     container_name: team11_postgres
     environment:
       POSTGRES_DB: ${TEAM11_POSTGRES_DB:-team11_db}
@@ -59,6 +60,7 @@ services:
 
   team11_mongo:
     image: mongo:7.0
+    platform: linux/amd64
     container_name: team11_mongo
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${TEAM11_MONGO_USER:-team11_mongo}

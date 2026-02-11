@@ -13,4 +13,4 @@ def base(request):
     return render(request, f"{TEAM_NAME}/index.html")
 
 def front(request):
-    return redirect(f"http://localhost:9151/api/test/")
+    return redirect(f"http://localhost:9151/team11/")
