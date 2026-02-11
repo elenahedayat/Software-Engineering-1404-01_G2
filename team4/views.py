@@ -6,7 +6,8 @@ from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.core.exceptions import ObjectDoesNotExist
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from .fields import Point
 
 from core.auth import api_login_required
@@ -621,6 +622,23 @@ def base(request):
 
 @extend_schema(
     tags=['Regions'],
+    parameters=[
+        OpenApiParameter(
+            name='query',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=True,
+            description='Search query string for region name'
+        ),
+        OpenApiParameter(
+            name='region_type',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            required=False,
+            enum=['province', 'city', 'village'],
+            description='Filter by region type'
+        ),
+    ],
     responses={200: RegionSearchResultSerializer(many=True)}
 )
 @api_view(['GET'])
