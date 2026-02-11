@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "data",
+    'data.apps.DataConfig',
     "presentation",
 ]
 
@@ -56,8 +58,7 @@ ROOT_URLCONF = 'tripPlanService.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -77,9 +78,25 @@ WSGI_APPLICATION = 'tripPlanService.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('TEAM11_POSTGRES_DB', default='team11_db'),
+        'USER': config('TEAM11_POSTGRES_USER', default='team11_user'),
+        'PASSWORD': config('TEAM11_POSTGRES_PASSWORD', default='team11_pass'),
+        'HOST': config('TEAM11_POSTGRES_HOST', default='localhost'),
+        'PORT': config('TEAM11_POSTGRES_PORT', default='5433'),
     }
+}
+
+# MongoDB Configuration
+MONGODB_SETTINGS = {
+    'db': config('TEAM11_MONGO_DB', default='team11_nosql'),
+    # localhost for local, team11_mongo in docker
+    'host': config('TEAM11_MONGO_HOST', default='localhost'),
+    # 27018 for local (mapped port)
+    'port': int(config('TEAM11_MONGO_PORT', default='27018')),
+    'username': config('TEAM11_MONGO_USER', default='team11_mongo'),
+    'password': config('TEAM11_MONGO_PASSWORD', default='team11_mongo_pass'),
+    'authentication_source': 'admin',
 }
 
 
