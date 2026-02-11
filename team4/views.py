@@ -74,6 +74,8 @@ class FacilityViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'list':
             return FacilityListSerializer
+        elif self.action == 'search':
+            return FacilityListSerializer
         elif self.action == 'retrieve':
             return FacilityDetailSerializer
         elif self.action == 'create':
@@ -156,6 +158,7 @@ class FacilityViewSet(viewsets.ModelViewSet):
         - province: Filter by province name (lowest priority)
         - category: Filter by category name (must be valid)
         - amenity: Filter by amenity name (must be valid)
+        - price_tier: Filter by price tier (free, budget, moderate, expensive, luxury)
         
         Query Parameters:
         - min_price, max_price: Price range filters
@@ -174,6 +177,7 @@ class FacilityViewSet(viewsets.ModelViewSet):
         # Extract other parameters
         category_name = data.get('category')
         amenity_name = data.get('amenity')
+        price_tier = data.get('price_tier')
         sort_by = request.query_params.get('sort', 'rating')
         
         # Validate category
@@ -210,6 +214,10 @@ class FacilityViewSet(viewsets.ModelViewSet):
             ) | facilities.filter(
                 amenities__name_fa__iexact=amenity_name
             )
+        
+        # Apply price tier filter
+        if price_tier:
+            facilities = facilities.filter(price_tier__iexact=price_tier)
         
         # Apply additional filters
         filters = {
@@ -261,6 +269,7 @@ class FacilityViewSet(viewsets.ModelViewSet):
         - province: Filter by province name (lowest priority)
         - category: Filter by category name (must be valid)
         - amenity: Filter by amenity name (must be valid)
+        - price_tier: Filter by price tier (free, budget, moderate, expensive, luxury)
         
         Query Parameters:
         - min_price, max_price: Price range filters
@@ -279,6 +288,7 @@ class FacilityViewSet(viewsets.ModelViewSet):
         # Extract other parameters
         category_name = data.get('category')
         amenity_name = data.get('amenity')
+        price_tier = data.get('price_tier')
         sort_by = request.query_params.get('sort', 'rating')
         
         # Validate category
@@ -315,6 +325,10 @@ class FacilityViewSet(viewsets.ModelViewSet):
             ) | facilities.filter(
                 amenities__name_fa__iexact=amenity_name
             )
+        
+        # Apply price tier filter
+        if price_tier:
+            facilities = facilities.filter(price_tier__iexact=price_tier)
         
         # Apply additional filters
         filters = {
