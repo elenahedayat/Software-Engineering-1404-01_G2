@@ -49,9 +49,11 @@ while remaining fully integrated with the Core routing
 and authentication system.
 
 All components are executed inside Docker containers.
-The Core container hosts the Django runtime,
-while Team6 includes a Gateway (Nginx) container
-as part of the standardized deployment structure.
+The Core container hosts the Django runtime and executes
+the Wiki application.
+
+Although a gateway configuration exists in the project template,
+the current implementation relies directly on the Core routing system.
 
 During development, the service operates using Django's
 default database configuration within the project environment.
@@ -91,7 +93,7 @@ team6/
 ├── templates/team6/       # HTML templates
 ├── migrations/            # Database schema migrations
 ├── templatetags/          # Custom template utilities
-├── gateway.conf           # Nginx configuration for the service gateway
+├── gateway.conf           # Template Nginx configuration (not actively customized)
 └── README.md              # Service documentation
 ```
 
@@ -118,16 +120,6 @@ http://localhost:8000/
 The Wiki Service (Team6) can be accessed via:
 
 http://localhost:8000/team6/
-
-To start only the Team6 Gateway container:
-
-```
-./linux_scripts/up-team.sh 6
-```
-
-In this case, the Gateway will be exposed at:
-
-http://localhost:9126/
 
 Note: The Wiki application itself runs inside the Core container and is mounted under the `/team6/` route.
 
