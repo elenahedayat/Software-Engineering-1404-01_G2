@@ -52,6 +52,24 @@ as part of the standardized deployment structure.
 During development, the service operates using Django's
 default database configuration within the project environment.
 
+### System Architecture Diagram
+
+```
+Browser
+   │
+   ▼
+Core (Django - Port 8000)
+   │
+   ├── /team6/
+   │      ├── Models
+   │      ├── Views
+   │      ├── Services
+   │      └── Templates
+   │
+   ▼
+Database (Project Default Configuration)
+```
+
 ---
 
 ## Project Structure
