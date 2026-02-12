@@ -3,7 +3,7 @@ import CreateTripForm from '../containers/create-trip/CreateTripForm';
 
 const CreateTrip = () => {
   return (
-    <div className="min-h-screen pt-10">
+    <div className="min-h-screen pt-3">
       <CreateTripForm />
     </div>
   );

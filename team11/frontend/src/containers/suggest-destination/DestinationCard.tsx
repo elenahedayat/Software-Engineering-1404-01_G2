@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 
 interface DestinationCardProps {
   province: string;
@@ -7,10 +7,16 @@ interface DestinationCardProps {
   summary: string;
   url: string;
   image?: string;
+  style?: string | null;
+  interests?: string[];
 }
 
-const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summary, url, image }) => {
-  const destinationPath = `/create-trip?province=${encodeURIComponent(province)}`;
+const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summary, url, image, style, interests }) => {
+  const params = new URLSearchParams();
+  params.set('province', province);
+  if (style) params.set('style', style);
+  if (interests && interests.length) params.set('interests', interests.join(','));
+  const destinationPath = `/create-trip?${params.toString()}`;
 
   return (
     <div className="group relative flex flex-col bg-[#E0E0E0] rounded-2xl shadow-sm border border-white/60 transition-all duration-300 hover:shadow-2xl overflow-hidden h-full">
@@ -63,8 +69,8 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summa
               to={destinationPath}
               className="inline-flex items-center gap-2 text-text-dark font-bold text-sm border-b-2 border-text-dark pb-1 hover:text-tile-cyan hover:border-tile-cyan transition-all"
             >
-              <i className="fa-solid fa-arrow-left text-xs"></i>
               ایجاد برنامه سفر
+              <i className="fa-solid fa-arrow-left text-xs"></i>
             </Link>
           </span>
         </div>
