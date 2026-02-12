@@ -146,6 +146,10 @@
                 <button type="submit" class="auth-btn btn-submit-signup" id="submit-btn">
                     <i class="fas fa-magic"></i> ساخت برنامه سفر هوشمند
                 </button>
+                <button type="button" class="t10-btn t10-btn--ghost" id="t10-reset-btn">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    پاک کردن
+                </button>
                 <p class="loading-text" id="loading">
                     <i class="fas fa-spinner fa-spin"></i> در حال ساخت برنامه شخصی‌سازی‌شده...
                 </p>
@@ -453,7 +457,7 @@
             // initial value (use 2 by default)
             let travelersCount = 2;
 
-            function syncAll() {
+            function syncTravelers() {
                 travelersSelect.value = String(travelersCount);
                 travelersInput.value = toPersianDigits(travelersCount);
             }
@@ -472,22 +476,22 @@
             function increaseTravelers() {
                 if (travelersCount >= maxTravelers) {
                     setHint(maxWarning, true);
-                    syncAll();
+                    syncTravelers();
                     return;
                 }
                 travelersCount += 1;
-                syncAll();
+                syncTravelers();
                 setHint();
             }
 
             function decreaseTravelers() {
                 if (travelersCount <= minTravelers) {
                     setHint(minWarning, true);
-                    syncAll();
+                    syncTravelers();
                     return;
                 }
                 travelersCount -= 1;
-                syncAll();
+                syncTravelers();
                 setHint();
             }
 
@@ -504,7 +508,7 @@
 
                 const clamped = clamp(typed);
                 travelersCount = clamped;
-                syncAll();
+                syncTravelers();
 
                 if (typed > maxTravelers) {
                     setHint(maxWarning, true);
@@ -518,7 +522,7 @@
             travelersInput.addEventListener('blur', function() {
                 const typed = parseTypedValue(travelersInput.value);
                 travelersCount = clamp(typed === null ? travelersCount : typed);
-                syncAll();
+                syncTravelers();
                 if (travelersCount > minTravelers && travelersCount < maxTravelers) {
                     setHint();
                 }
@@ -534,7 +538,7 @@
                 } else if (event.key === 'Enter') {
                     const typed = parseTypedValue(travelersInput.value);
                     travelersCount = clamp(typed === null ? travelersCount : typed);
-                    syncAll();
+                    syncTravelers();
                     if (typed !== null && typed > maxTravelers) {
                         setHint(maxWarning, true);
                     } else if (typed !== null && typed < minTravelers) {
@@ -546,8 +550,18 @@
             });
 
             // init
-            syncAll();
+            syncTravelers();
             setHint();
+
+            window.t10SetTravelersCount = function(nextValue) {
+                const next = parseInt(nextValue, 10);
+                travelersCount = clamp(Number.isFinite(next) ? next : travelersCount);
+                syncTravelers();
+                setHint();
+            };
+            window.t10ResetTravelersHint = function() {
+                setHint();
+            };
         }
 
         function initBudgetSegmentedControl() {
@@ -565,14 +579,19 @@
                 });
             }
 
+            function setBudget(value) {
+                budgetSelect.value = value;
+                syncBudgetPills();
+            }
+
             pills.forEach(function(pill) {
                 pill.addEventListener('click', function() {
-                    budgetSelect.value = pill.getAttribute('data-value');
-                    syncBudgetPills();
+                    setBudget(pill.getAttribute('data-value'));
                 });
             });
 
             syncBudgetPills();
+            window.t10SetBudgetValue = setBudget;
         }
 
         $(document).ready(function() {
@@ -643,6 +662,19 @@
         const resultContent = document.getElementById('result-content');
         const celebrateBadge = document.getElementById('t10-celebrate-badge');
         const submitBtn = document.getElementById('submit-btn');
+        const resetBtn = document.getElementById('t10-reset-btn');
+
+        const DEFAULT_TRAVELERS = (function() {
+            const travelersInput = document.getElementById('travelers-input');
+            const raw = travelersInput ? persianToEnglish(travelersInput.value) : '2';
+            const parsed = parseInt(raw, 10);
+            return Number.isFinite(parsed) ? parsed : 2;
+        })();
+
+        const DEFAULT_BUDGET = (function() {
+            const budgetSelect = document.getElementById('budget_level');
+            return budgetSelect ? budgetSelect.value : 'MODERATE';
+        })();
 
         loading.style.display = 'none';
         resultArea.style.display = 'none';
@@ -693,6 +725,68 @@
             window.setTimeout(function() {
                 celebrateBadge.classList.remove('is-animating');
             }, 1500);
+        }
+
+        function clearSelectedPrefs() {
+            document.querySelectorAll('input[name="preferences"]').forEach(function(input) {
+                input.checked = false;
+            });
+        }
+
+        function resetCreateTripForm() {
+            const destinationInput = document.getElementById('destination');
+            const destinationPanel = document.getElementById('destination-suggestions');
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            const startDateGreg = document.getElementById('start-date-gregorian');
+            const endDateGreg = document.getElementById('end-date-gregorian');
+
+            if (destinationInput) {
+                destinationInput.value = '';
+                destinationInput.focus();
+            }
+            if (destinationPanel) {
+                destinationPanel.innerHTML = '';
+                destinationPanel.classList.remove('is-open');
+            }
+
+            if (startDateInput) startDateInput.value = '';
+            if (endDateInput) endDateInput.value = '';
+            if (startDateGreg) startDateGreg.value = '';
+            if (endDateGreg) endDateGreg.value = '';
+
+            try { $('#start-date').persianDatepicker('setDate', null); } catch (err) {}
+            try { $('#end-date').persianDatepicker('setDate', null); } catch (err) {}
+            try { $('#end-date').persianDatepicker('option', 'minDate', null); } catch (err) {}
+
+            if (typeof window.t10SetTravelersCount === 'function') {
+                window.t10SetTravelersCount(DEFAULT_TRAVELERS);
+            }
+            if (typeof window.t10ResetTravelersHint === 'function') {
+                window.t10ResetTravelersHint();
+            }
+
+            if (typeof window.t10SetBudgetValue === 'function') {
+                window.t10SetBudgetValue(DEFAULT_BUDGET);
+            }
+
+            clearSelectedPrefs();
+
+            if (loading) loading.style.display = 'none';
+            if (resultArea) resultArea.style.display = 'none';
+            if (resultContent) resultContent.innerHTML = '';
+            if (celebrateBadge) {
+                celebrateBadge.textContent = '';
+                celebrateBadge.classList.remove('is-visible', 'is-animating');
+            }
+
+            if (form) {
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', resetCreateTripForm);
         }
 
         form.addEventListener('submit', async function(e) {
