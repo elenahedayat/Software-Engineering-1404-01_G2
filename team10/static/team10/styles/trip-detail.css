@@ -39,6 +39,61 @@
   gap: 12px;
 }
 
+/* ---------- FIX: bottom row layout ---------- */
+.t10-summary-bottom {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  margin-top: 0;
+}
+
+.t10-summary-bottom__cost {
+  /* cost should take remaining space like other cards */
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  order: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.t10-summary-bottom__actions {
+  /* actions keep their width */
+  flex: 0 0 auto;
+  margin: 0;
+  order: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.t10-summary-bottom__actions .t10-trip-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+/* make sure the cost box fills the wrapper */
+.t10-info-item--cost {
+  flex: 0 0 auto;
+   width: 48%;
+  margin: 0;
+  align-self: stretch;
+}
+/* ------------------------------------------ */
+
+.t10-trip-actions .t10-btn,
+.t10-trip-actions a {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 14px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
 .t10-info-item {
   background: #ffffff;
   border: 1px solid rgba(46, 125, 50, 0.12);
@@ -67,25 +122,6 @@
   color: var(--forest-green);
   font-size: 1.02rem;
   line-height: 1.6;
-}
-
-.t10-trip-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: center;
-  grid-column: 2 / -1;
-  margin-top: 4px;
-}
-
-.t10-trip-actions .t10-btn,
-.t10-trip-actions a {
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 14px;
-  white-space: nowrap;
-  flex: 0 0 auto;
 }
 
 .t10-status-badge {
@@ -261,33 +297,30 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .t10-trip-actions {
-    grid-column: 1 / -1;
-  }
-
   .t10-activity-row {
     grid-template-columns: 110px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .t10-summary-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .t10-summary-bottom__cost {
+    flex: 1 1 auto;
+  }
+
+  .t10-summary-bottom__actions .t10-trip-actions {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 
 @media (max-width: 720px) {
   .t10-summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .t10-trip-actions {
-    justify-content: stretch;
-  }
-
-  .t10-trip-actions .t10-btn,
-  .t10-trip-actions a {
-    flex: 1 1 calc(50% - 10px);
-    text-align: center;
-  }
-
-  .t10-trip-actions .t10-btn:last-child,
-  .t10-trip-actions a:last-child {
-    flex-basis: 100%;
   }
 
   .t10-activity-row {

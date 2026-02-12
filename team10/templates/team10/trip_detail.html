@@ -70,14 +70,28 @@
                       {% endwith %}
                     </span>
                 </div>
-                <div class="t10-info-item">
-                    <span class="t10-info-label">هزینه کل</span>
-                    <span class="t10-info-value">{{ total_cost|floatformat:0|default:"—" }} تومان</span>
-                </div>
-                <div class="t10-trip-actions">
-                  <a class="t10-btn t10-btn--secondary" href="{% url 'team10:trip_cost' trip.id %}">هزینه سفر</a>
-                  <a class="t10-btn t10-btn--secondary" href="{% url 'team10:trip_styles' trip.id %}">سبک‌ها</a>
-                  <a class="t10-btn t10-btn--primary" href="{% url 'team10:trip_replan' trip.id %}">بازتولید برنامه</a>
+                <div class="t10-summary-bottom">
+                  <div class="t10-summary-bottom__actions">
+                    <div class="t10-trip-actions">
+                      <a class="t10-btn t10-btn--secondary" href="{% url 'team10:trip_cost' trip.id %}">هزینه سفر</a>
+                      <a class="t10-btn t10-btn--secondary" href="{% url 'team10:trip_styles' trip.id %}">سبک‌ها</a>
+                      <a class="t10-btn t10-btn--secondary" href="{% url 'team10:trip_replan' trip.id %}">بازتولید برنامه</a>
+                    </div>
+                  </div>
+                  <div class="t10-summary-bottom__cost">
+                    <div class="t10-info-item t10-info-item--cost t10-total-cost">
+                      <span class="t10-info-label">هزینه کل</span>
+                      <span class="t10-info-value t10-num">
+                        {% with c=total_cost %}
+                          {% if c %}
+                            {{ c|floatformat:0 }} تومان
+                          {% else %}
+                            —
+                          {% endif %}
+                        {% endwith %}
+                      </span>
+                    </div>
+                  </div>
                 </div>
             </div>
         </div>
