@@ -47,12 +47,8 @@ def create_trip_api(request):
         trip = trip_planning_service.create_initial_trip(data, user_id)
 
         # Return success response
-        return JsonResponse({
-            'success': True,
-            'trip_id': trip.id,
-            'status': trip.status,
-            'message': 'Trip created successfully'
-        }, status=201)
+        return JsonResponse(
+            dict(success=True, trip_id=trip.id, status=trip.status, message='Trip created successfully'), status=201)
 
     except json.JSONDecodeError:
         return JsonResponse({
