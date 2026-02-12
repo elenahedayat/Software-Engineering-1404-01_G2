@@ -10,6 +10,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY tripPlanService/ /app/
 
+# Create fonts directory and ensure Persian fonts are accessible
+RUN mkdir -p /app/fonts && \
+    if [ -f /app/presentation/fonts/Vazirmatn-Regular.ttf ]; then \
+        cp /app/presentation/fonts/*.ttf /app/fonts/; \
+    fi
+
 EXPOSE 50051
 
 CMD ["bash", "-c", "\

@@ -24,17 +24,25 @@ from data.models import Trip
 
 # Register Persian fonts (Regular and Bold)
 try:
-    # Try to find Vazirmatn fonts in system
+    # Try to find Vazirmatn fonts in system or project directory
     import os
+    from pathlib import Path
+    
+    # Get current file's directory
+    current_dir = Path(__file__).parent
+    project_fonts = current_dir / 'fonts'
+    
     vazir_regular_paths = [
-        '/app/fonts/Vazirmatn-Regular.ttf',  # Inside container
+        str(project_fonts / 'Vazirmatn-Regular.ttf'),  # Project directory
+        '/app/fonts/Vazirmatn-Regular.ttf',  # Inside container (if fonts copied separately)
         '/home/seyedalida/.local/share/fonts/Vazirmatn-Regular.ttf',  # Host system
         '/usr/share/fonts/truetype/vazir/Vazirmatn-Regular.ttf',
         '/usr/local/share/fonts/Vazirmatn-Regular.ttf'
     ]
     
     vazir_bold_paths = [
-        '/app/fonts/Vazirmatn-Bold.ttf',  # Inside container
+        str(project_fonts / 'Vazirmatn-Bold.ttf'),  # Project directory
+        '/app/fonts/Vazirmatn-Bold.ttf',  # Inside container (if fonts copied separately)
         '/home/seyedalida/.local/share/fonts/Vazirmatn-Bold.ttf',  # Host system
         '/usr/share/fonts/truetype/vazir/Vazirmatn-Bold.ttf',
         '/usr/local/share/fonts/Vazirmatn-Bold.ttf'
