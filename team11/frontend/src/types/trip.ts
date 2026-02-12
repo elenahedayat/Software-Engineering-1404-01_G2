@@ -1,6 +1,6 @@
 export type TripStyle = 'SOLO' | 'COUPLE' | 'FAMILY' | 'FRIENDS' | 'BUSINESS';
 export type TripDensity = 'RELAXED' | 'BALANCED' | 'INTENSIVE';
-export type BudgetLevel = 'ECONOMY' | 'MEDIUM' | 'LUXURY';
+export type BudgetLevel = 'ECONOMY' | 'MEDIUM' | 'LUXURY' | 'UNLIMITED';
 export type TripStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 export type ItemType = 'VISIT' | 'STAY';
 export type InterestType = 'HISTORICAL' | 'SHOPPING' | 'RECREATIONAL' | 'RELIGIOUS' | 'NATURAL' | 'DINING' | 'STUDY' | 'EVENTS';
@@ -9,6 +9,7 @@ export interface TripItem {
   id: string;
   type: ItemType;
   title: string;
+  category: string
   start_time: string;
   end_time: string;
   summery: string;

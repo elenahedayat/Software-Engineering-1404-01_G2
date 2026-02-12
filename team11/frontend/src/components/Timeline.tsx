@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { toJalaali } from 'jalaali-js';
 import MultiRangeSlider, { RangeSection } from '@/components/ui/MultiRangeSlider';
 import TripItemCard from '@/components/TripItemCard';
 import { TripItemWithDay } from '@/types/trip';
@@ -14,7 +15,7 @@ interface TimelineProps {
 }
 
 // Constants for timeline visualization
-const MINUTES_PER_PIXEL = 0.5; // 0.5 minute per pixel (larger timeline)
+const MINUTES_PER_PIXEL = 0.3; // 0.5 minute per pixel (larger timeline)
 const CARD_MAX_WIDTH = 500;
 // (timeline spans `totalDays` so start/end constants not needed)
 
@@ -91,6 +92,8 @@ const Timeline: React.FC<TimelineProps> = ({
     const innerTrackRef = useRef<HTMLDivElement | null>(null);
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [visibleDay, setVisibleDay] = useState<number>(1);
+    const rafRef = useRef<number | null>(null);
 
     // Scroll helpers
     const scrollToCard = (index: number) => {
@@ -120,17 +123,105 @@ const Timeline: React.FC<TimelineProps> = ({
         }
     }, [items.length]);
 
+    // Update visible day based on scroll position (center of container)
+    useEffect(() => {
+        const container = trackContainerRef.current;
+        const inner = innerTrackRef.current;
+        if (!container || !inner) return;
+
+        const update = () => {
+            const containerRect = container.getBoundingClientRect();
+            const innerRect = inner.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            // center position in viewport relative to inner track left
+            const centerX = containerRect.left + containerWidth / 2 - innerRect.left;
+            // RTL mapping: pixel x corresponds to time = totalMinutes - x * MINUTES_PER_PIXEL
+            let minutes = Math.round(totalMinutes - centerX * MINUTES_PER_PIXEL);
+            if (minutes < 0) minutes = 0;
+            if (minutes > totalMinutes) minutes = totalMinutes;
+            const day = Math.floor(minutes / (24 * 60)) + 1;
+            setVisibleDay(day);
+            rafRef.current = null;
+        };
+
+        const onScroll = () => {
+            if (rafRef.current != null) return;
+            rafRef.current = window.requestAnimationFrame(update) as unknown as number;
+        };
+
+        // initial set
+        update();
+
+        container.addEventListener('scroll', onScroll, { passive: true });
+        return () => {
+            container.removeEventListener('scroll', onScroll);
+            if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
+        };
+    }, [totalMinutes]);
+
+    // Helper component to render visible day label with Jalali date
+    interface VisibleDayLabelProps {
+        visibleDay: number;
+        items: TripItemWithDay[];
+    }
+
+    const persianWeekdays = [
+        'یک‌شنبه',
+        'دوشنبه',
+        'سه‌شنبه',
+        'چهارشنبه',
+        'پنج‌شنبه',
+        'جمعه',
+        'شنبه',
+    ];
+
+    const VisibleDayLabel: React.FC<VisibleDayLabelProps> = ({ visibleDay, items }) => {
+        // Try to find an item that matches the visible day
+        let dateStr = items.find((i) => i.day_number === visibleDay)?.date;
+
+        // If not found, derive from first item date + offset
+        if (!dateStr && items.length > 0) {
+            const first = items[0];
+            const base = new Date(first.date);
+            const dayOffset = visibleDay - first.day_number;
+            const target = new Date(base);
+            target.setDate(target.getDate() + dayOffset);
+            dateStr = target.toISOString();
+        }
+
+        if (!dateStr) {
+            return (
+                <span className="inline-block bg-persian-blue text-white px-3 py-1 rounded shadow text-sm text-gray-700">{`روز ${visibleDay}`}</span>
+            );
+        }
+
+        const gDate = new Date(dateStr);
+        const weekday = persianWeekdays[gDate.getDay()];
+        const { jy, jm, jd } = toJalaali(gDate.getFullYear(), gDate.getMonth() + 1, gDate.getDate());
+        const jmStr = jm.toString().padStart(2, '0');
+        const jdStr = jd.toString().padStart(2, '0');
+
+        return (
+            <span className="inline-block bg-persian-blue text-white px-3 py-1 rounded shadow text-sm text-gray-700">{`روز ${visibleDay} - ${weekday} ${jmStr}/${jdStr}`}</span>
+        );
+    };
+
     if (items.length === 0) return null;
 
     return (
         <div className="mb-12">
             {/* Timeline Header */}
-            <div className="mb-6 pb-4 border-b-2 border-gray-200">
+            <div className="mb-3 text-center pb-1 border-b-2 border-gray-200">
                 <h3 className="text-xl font-bold text-gray-800">{title}</h3>
             </div>
 
+            {/* Visible Day (updates on scroll) */}
+            <div className="mb-4 text-center">
+                <VisibleDayLabel visibleDay={visibleDay} items={items} />
+            </div>
+
             {/* Timeline Track */}
-            <div className="relative" style={{ width: '100%', overflowX: 'auto', overflowY: 'hidden' }} ref={trackContainerRef}>
+            <div className="relative -me-[150px] -ms-[150px]" style={{ overflowX: 'auto', overflowY: 'hidden' }} ref={trackContainerRef}>
                 <div ref={innerTrackRef} style={{ width: `${timelineWidth}px`, minWidth: '100%', position: 'relative' }}>
                     {/* Cards Container */}
                     <div className="relative mb-4" style={{ height: '240px' }}>
@@ -156,7 +247,7 @@ const Timeline: React.FC<TimelineProps> = ({
                                         {index < items.length - 1 && (
                                             <button
                                                 onClick={() => scrollToCard(index + 1)}
-                                                className={`absolute -left-8 top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full w-7 h-7 flex items-center justify-center shadow-sm transition-opacity hover:bg-gray-50 z-10 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                                className={`absolute -left-8 top-1/2 transform -translate-y-1/2 bg-white border hover:cursor-pointer border-gray-300 rounded-full w-7 h-7 flex items-center justify-center shadow-sm transition-opacity hover:bg-gray-50 z-10 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                                                 aria-label="next"
                                             >
                                                 <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +267,7 @@ const Timeline: React.FC<TimelineProps> = ({
                                         {index > 0 && (
                                             <button
                                                 onClick={() => scrollToCard(index - 1)}
-                                                className={`absolute -right-8 top-1/2 transform -translate-y-1/2 bg-white border border-gray-300 rounded-full w-7 h-7 flex items-center justify-center shadow-sm transition-opacity hover:bg-gray-50 z-10 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                                                className={`absolute -right-8 top-1/2 transform -translate-y-1/2 bg-white  hover:cursor-pointer border-gray-300 rounded-full w-7 h-7 flex items-center justify-center shadow-sm transition-opacity hover:bg-gray-50 z-10 ${showArrows ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                                                 aria-label="prev"
                                             >
                                                 <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -16,7 +16,8 @@ export const GEOGRAPHIC_REGIONS = [
 export const BUDGET_LEVELS = [
   { value: 'ECONOMY', label: 'اقتصادی' },
   { value: 'MEDIUM', label: 'معمولى' },
-  { value: 'LUXURY', label: 'لوکس' }
+  { value: 'LUXURY', label: 'لوکس' },
+  { value: 'UNLIMITED', label: 'بدون محدودیت' }
 ];
 
 export const TRAVEL_STYLES = [

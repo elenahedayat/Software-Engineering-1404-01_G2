@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CreateTripPayload, UpdateTripItemPayload } from '@/types/trip';
+import { CreateTripPayload, UpdateTripItemPayload, BudgetLevel } from '@/types/trip';
 
 const api = axios.create({
     baseURL: '/api',
@@ -15,6 +15,8 @@ export const destinationApi = {
 export const tripApi = {
     create: (data: CreateTripPayload) => api.post('/trips', data),
     getById: (id: string) => api.get(`/trips/${id}`),
+    updateTrip: (tripId: string, data: { budget_level?: BudgetLevel }) => 
+        api.patch(`/trips/${tripId}`, data),
     updateItem: (tripId: string, itemId: string, data: UpdateTripItemPayload) => 
         api.patch(`/trips/${tripId}/items/${itemId}`, data),
     deleteItem: (tripId: string, itemId: string) => 

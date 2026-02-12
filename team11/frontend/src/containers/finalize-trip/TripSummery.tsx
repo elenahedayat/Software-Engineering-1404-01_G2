@@ -1,6 +1,7 @@
 // TripSummary.tsx
 import React from 'react';
 import { BUDGET_LEVELS_MAP, PROGRAM_DENSITY_MAP, TRAVEL_STYLES_MAP } from '@/containers/suggest-destination/constants';
+import { formatToJalali } from '@/utils/dateUtils';
 
 
 interface TripSummaryProps {
@@ -37,7 +38,7 @@ const TripSummary: React.FC<TripSummaryProps> = ({
                     {start_date && end_date && (
                         <span>
                             <i className="fa-solid fa-calendar ml-1"></i>
-                            {start_date} تا {end_date}
+                            {formatToJalali(start_date)} تا {formatToJalali(end_date)}
                         </span>
                     )}
                     {duration_days && (
@@ -48,8 +49,8 @@ const TripSummary: React.FC<TripSummaryProps> = ({
                     )}
                 </div>
 
-                <div className="rounded-lg p-4 flex items-center justify-between">
-                    <div className="flex gap-6 text-sm">
+                <div className="rounded-lg p-2 flex items-center justify-between">
+                    <div className="flex gap-2 text-sm">
                         {style && (
                             <span className="px-3 py-1 bg-white rounded-full shadow-sm">
                                 <i className="fa-solid fa-user-group ml-1 text-blue-600"></i>

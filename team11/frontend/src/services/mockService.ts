@@ -50,6 +50,7 @@ export const getMockTrip = () => {
       resolve({
         data: {
           id: "550e8400-e29b-41d4-a716-446655440000",
+          category: 'تاریخی',
           title: "سفر به اصفهان",
           province: "اصفهان",
           city: "اصفهان",
@@ -68,20 +69,22 @@ export const getMockTrip = () => {
                 {
                   id: "item-001",
                   type: "VISIT",
+                  category: 'رستوران',
                   title: "میدان نقش جهان",
                   start_time: "01:00",
                   end_time: "11:00",
                   summery: "میدان نقش جهان یکی از بزرگترین میادین جهان و شاهکار معماری دوران صفویه است",
-                  cost: 200000,
+                  cost: 14000000,
                   address: "اصفهان، میدان امام",
                   url: "https://example.com/naghsh-jahan"
                 },
                 {
                   id: "item-002",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "مسجد شاه",
                   start_time: "11:30",
-                  end_time: "13:00",
+                  end_time: "12:30",
                   summery: "مسجد شاه با معماری باشکوه و کاشی‌کاری‌های بی‌نظیر از آثار ماندگار دوره صفویه",
                   cost: 150000,
                   address: "اصفهان، میدان نقش جهان، ضلع جنوبی",
@@ -90,6 +93,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-003",
                   type: "STAY",
+                  category: 'هتل',
                   title: "هتل عباسی",
                   start_time: "14:00",
                   end_time: "22:00",
@@ -107,6 +111,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-004",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "سی‌وسه‌پل",
                   start_time: "08:30",
                   end_time: "10:00",
@@ -118,6 +123,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-005",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "کاخ چهلستون",
                   start_time: "10:30",
                   end_time: "12:30",
@@ -129,6 +135,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-006",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "بازار قیصریه",
                   start_time: "15:00",
                   end_time: "18:00",
@@ -146,6 +153,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-007",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "کلیسای وانک",
                   start_time: "09:00",
                   end_time: "11:00",
@@ -157,6 +165,7 @@ export const getMockTrip = () => {
                 {
                   id: "item-008",
                   type: "VISIT",
+                  category: 'تاریخی',
                   title: "پل خواجو",
                   start_time: "12:00",
                   end_time: "13:30",
