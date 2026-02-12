@@ -180,7 +180,9 @@ def publish_version(request, version_name):
 @authentication_classes(AUTH_CLASSES)
 @permission_classes(PERM_CLASSES)
 def my_articles(request):
-    articles = Article.objects.filter(creator_id=request.user.id)
+    articles = Article.objects.filter(
+        creator_id=request.user.id
+    ).select_related('current_version').prefetch_related('versions')
     return Response(ArticleSerializer(articles, many=True).data)
 
 
@@ -221,5 +223,11 @@ def search_articles(request):
     if not query:
         return Response({"detail": "Query missing"}, status=400)
 
-    results = search_articles_semantic(query)
+    try:
+        results = search_articles_semantic(query)
+    except Exception as e:
+        return Response(
+            {"detail": f"Search service unavailable: {e}"},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
     return Response({"query": query, "results": results})
