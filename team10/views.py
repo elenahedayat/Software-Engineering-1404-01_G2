@@ -349,8 +349,8 @@ def _get_status_fa(status: str) -> str:
 def trip_detail(request, trip_id: int):
     """نمایش جزئیات یک سفر خاص"""
     try:
-        qs = _safe_trips_queryset(request)
-        trip = qs.filter(id=trip_id).first()
+        user_id = str(request.user.id) if hasattr(request.user, 'id') else None
+        trip, dest_info = trip_planning_service.view_trip(trip_id, user_id)
         if not trip:
             raise Http404()
         req = trip.requirements
@@ -417,6 +417,7 @@ def trip_detail(request, trip_id: int):
             "team10/trip_detail.html",
             {
                 "trip": trip,
+                "destination_info": dest_info,
                 "days_count": days_count,
                 "total_cost": trip.calculate_total_cost(),
                 "days_list": days_list,
