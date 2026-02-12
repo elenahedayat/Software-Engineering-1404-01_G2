@@ -4,7 +4,10 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from core.auth import api_login_required
 
+from .application.services.trip_planning_service_impl import TripPlanningServiceImpl
+from .infrastructure.clients.wiki_client import get_wiki_client
 from .services import trip_planning_service
+
 from .models import Trip
 
 
@@ -71,6 +74,9 @@ def get_trip_api(request, trip_id):
         # Only allow users to view their own trips
         user_id = str(request.user.id) if hasattr(request.user, 'id') else None
         trip = Trip.objects.get(id=trip_id, user_id=user_id)
+        wiki = get_wiki_client(use_mock=True)
+        dest_info = wiki.get_destination_basic_info(trip.requirements.destination_name)
+
 
         # Prepare response data
         trip_data = {
@@ -106,7 +112,13 @@ def get_trip_api(request, trip_id):
             'preferences': [
                 {'tag': c.tag, 'description': c.description}
                 for c in trip.requirements.constraints.all()
-            ]
+            ],
+            'destination_info': {
+                'name': dest_info.name,
+                'description': dest_info.description,
+                'country': dest_info.country,
+                'region': dest_info.region,
+            },
         }
 
         return JsonResponse(trip_data)

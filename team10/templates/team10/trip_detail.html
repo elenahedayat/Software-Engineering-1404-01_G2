@@ -2,11 +2,11 @@
 {% block title %}جزئیات سفر{% endblock %}
 
 {% block content %}
-    {% if trip %}
-        <div class="page-header">
-            <h2>{{ trip.destination_name }}</h2>
-            <p>جزئیات سفر</p>
-        </div>
+<section class="t10-page">
+  <section class="t10-section">
+    <h2>جزئیات سفر</h2>
+    <p>نمایش اطلاعات کلی و برنامه روزانه سفر.</p>
+  </section>
 
         <div class="trip-details-card">
             <div class="trip-info-grid">
@@ -36,7 +36,7 @@
                 </div>
                 <div class="info-item">
                     <span class="label">سطح بودجه</span>
-                    <span class="value">{{ trip.requirements.get_budget_level_display|default:"—" }}</span>
+                    <span clascompelates="value">{{ trip.requirements.get_budget_level_display|default:"—" }}</span>
                 </div>
                 <div class="info-item">
                     <span class="label">هزینه کل</span>
@@ -45,24 +45,74 @@
             </div>
         </div>
 
-        <div class="actions">
-            <a class="btn btn-primary" href="/team10/trips/{{ trip.id }}/cost/">
-                <i class="fa-solid fa-calculator"></i>
-                تحلیل هزینه
-            </a>
-            <a class="btn btn-primary" href="/team10/trips/{{ trip.id }}/styles/">
-                <i class="fa-solid fa-palette"></i>
-                سبک‌ها
-            </a>
-            <a class="btn btn-secondary" href="/team10/trips/{{ trip.id }}/replan/">
-                <i class="fa-solid fa-arrow-rotate-left"></i>
-                بازتولید
-            </a>
+  <section class="t10-card">
+    <h3>برنامه روزانه</h3>
+
+    {% for plan in daily_plans %}
+    <div class="t10-day-block">
+      <h4>روز {{ forloop.counter }}</h4>
+      <div class="t10-item-row">
+        <div><strong>نام:</strong> {{ plan.description|truncatechars:40|default:"-" }}</div>
+        <div><strong>نوع:</strong>
+          {% if plan.activity_type == "SIGHTSEEING" %}گردشگری
+          {% elif plan.activity_type == "FOOD" %}غذا
+          {% elif plan.activity_type == "SHOPPING" %}خرید
+          {% elif plan.activity_type == "OUTDOOR" %}فضای باز
+          {% elif plan.activity_type == "CULTURE" %}فرهنگی
+          {% elif plan.activity_type == "RELAX" %}استراحت
+          {% elif plan.activity_type == "NIGHTLIFE" %}شب‌گردی
+          {% elif plan.activity_type == "TRANSPORT" %}حمل‌ونقل
+          {% else %}سایر
+          {% endif %}
         </div>
-    {% else %}
-        <div class="alert alert-error">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            دیتابیس آماده نیست یا سفر پیدا نشد. (trip_id={{ trip_id }})
-        </div>
-    {% endif %}
+        <div><strong>ساعت پیشنهادی:</strong> {{ plan.start_at|date:"H:i"|default:"-" }}</div>
+        <div><strong>توضیح کوتاه:</strong> {{ plan.description|default:"-" }}</div>
+      </div>
+      <div class="t10-transfer">
+        بازه زمانی: {{ plan.start_at|date:"Y-m-d H:i"|default:"-" }} تا {{ plan.end_at|date:"Y-m-d H:i"|default:"-" }}
+      </div>
+    </div>
+    {% empty %}
+    <div class="t10-day-block">
+      <div class="t10-item-row">
+        <div>برنامه‌ای برای این سفر ثبت نشده است.</div>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="t10-card">
+    <h3>هتل‌ها</h3>
+    {% for hotel in hotel_schedules %}
+    <div class="t10-day-block">
+      <div class="t10-item-row">
+        <div><strong>شناسه هتل:</strong> {{ hotel.hotel_id }}</div>
+        <div><strong>تعداد اتاق:</strong> {{ hotel.rooms_count }}</div>
+        <div><strong>هزینه:</strong> {{ hotel.cost }}</div>
+      </div>
+      <div class="t10-transfer">
+        بازه اقامت: {{ hotel.start_at|date:"Y-m-d H:i"|default:"-" }} تا {{ hotel.end_at|date:"Y-m-d H:i"|default:"-" }}
+      </div>
+    </div>
+    {% empty %}
+    <div class="t10-day-block">
+      <div class="t10-item-row">
+        <div>هتلی برای این سفر ثبت نشده است.</div>
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <div class="t10-actions">
+    <a class="t10-btn t10-btn--secondary" href="/team10/trips/{{ trip.id }}/cost/">هزینه سفر</a>
+    <a class="t10-btn t10-btn--secondary" href="/team10/trips/{{ trip.id }}/styles/">سبک‌ها</a>
+    <a class="t10-btn t10-btn--primary" href="/team10/trips/{{ trip.id }}/replan/">بازتولید برنامه</a>
+  </div>
+  {% else %}
+  <section class="t10-card">
+    <h3>جزئیات سفر</h3>
+    <p>سفر موردنظر پیدا نشد.</p>
+  </section>
+  {% endif %}
+</section>
 {% endblock %}

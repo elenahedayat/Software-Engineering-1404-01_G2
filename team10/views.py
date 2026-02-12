@@ -239,9 +239,21 @@ def trip_detail(request, trip_id: int):
         trip = qs.filter(id=trip_id).first()
         if not trip:
             raise Http404()
-        return render(request, "team10/trip_detail.html", {"trip": trip})
+        return render(
+            request,
+            "team10/trip_detail.html",
+            {
+                "trip": trip,
+                "daily_plans": trip.daily_plans.all(),
+                "hotel_schedules": trip.hotel_schedules.all(),
+            },
+        )
     except OperationalError:
-        return render(request, "team10/trip_detail.html", {"trip": None, "trip_id": trip_id})
+        return render(
+            request,
+            "team10/trip_detail.html",
+            {"trip": None, "trip_id": trip_id, "daily_plans": [], "hotel_schedules": []},
+        )
 
 
 def trip_cost(request, trip_id: int):

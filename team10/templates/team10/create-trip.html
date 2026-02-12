@@ -1,49 +1,16 @@
+﻿{% extends "team10/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ایجاد برنامه سفر | ایران‌نما</title>
-    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+{% block title %}ایجاد برنامه سفر | ایران‌نما{% endblock %}
+
+{% block extra_css %}
     <!-- تقویم شمسی -->
     <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@latest/dist/css/persian-datepicker.min.css">
-
     <!-- استایل اختصاصی این صفحه -->
     <link rel="stylesheet" href="{% static 'team10/styles/create-trip.css' %}">
-</head>
-<body>
+{% endblock %}
 
-    <div class="bg-pattern"></div>
-
-    <header class="main-header">
-        <div class="container header-content">
-            <div class="logo">
-                <i class="fa-solid fa-leaf"></i>
-                <div class="logo-text">
-                    <h1>ایران‌نما</h1>
-                    <span>سامانه هوشمند گردشگری</span>
-                </div>
-            </div>
-            <div class="auth-buttons">
-                {% if request.user.is_authenticated %}
-                    <form method="post" action="/auth/logout/" style="display:inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-login">خروج</button>
-                    </form>
-                {% else %}
-                    <a href="/auth/" class="btn btn-login">ورود</a>
-                    <a href="/auth/signup/" class="btn btn-login">ثبت‌نام</a>
-                {% endif %}
-            </div>
-        </div>
-    </header>
-
+{% block content %}
     <section class="hero hero-custom">
         <div class="hero-content">
             <h2>برنامه‌ریزی سفر هوشمند</h2>
@@ -68,18 +35,18 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="start-date">تاریخ شروع <span class="required">*</span></label>
-                    <div class="input-with-icon">
-                        <input type="text" id="start-date" name="start_date_jalali" class="persian-date jalali-input" placeholder="۱۴۰۴/۱۱/۲۲" required autocomplete="off">
-                        <i class="fas fa-calendar-alt calendar-icon"></i>
+                    <div class="t10-input-with-icon">
+                        <input type="text" id="start-date" name="start_date_jalali" class="t10-jalali-input persian-date" placeholder="۱۴۰۴/۱۱/۲۲" required autocomplete="off">
+                        <i class="fas fa-calendar-alt t10-calendar-icon"></i>
                     </div>
                     <input type="hidden" name="start_date" id="start-date-gregorian">
                 </div>
 
                 <div class="form-group">
                     <label for="end-date">تاریخ پایان <span class="required">*</span></label>
-                    <div class="input-with-icon">
-                        <input type="text" id="end-date" name="end_date_jalali" class="persian-date jalali-input" placeholder="۱۴۰۴/۱۲/۰۵" required autocomplete="off">
-                        <i class="fas fa-calendar-alt calendar-icon"></i>
+                    <div class="t10-input-with-icon">
+                        <input type="text" id="end-date" name="end_date_jalali" class="t10-jalali-input persian-date" placeholder="۱۴۰۴/۱۲/۰۵" required autocomplete="off">
+                        <i class="fas fa-calendar-alt t10-calendar-icon"></i>
                     </div>
                     <input type="hidden" name="end_date" id="end-date-gregorian">
                 </div>
@@ -153,10 +120,6 @@
             <button class="auth-btn btn-submit-login" onclick="window.location.reload()">سفر جدید</button>
         </div>
     </main>
-
-    <footer class="main-footer">
-        <p>&copy; ۱۴۰۴ - پروژه مهندسی نرم‌افزار ۱ | دانشگاه صنعتی امیرکبیر</p>
-    </footer>
 
     <!-- اسکریپت‌های مورد نیاز -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
@@ -266,13 +229,13 @@
             $('#end-date').persianDatepicker(datePickerOptions);
 
             // باز کردن تقویم روی فوکوس (خیلی موثر است)
-            $('.jalali-input').on('focus', function() {
+            $('.t10-jalali-input').on('focus', function() {
                 $(this).persianDatepicker('show');
             });
 
             // کلیک روی آیکون تقویم → فوکوس روی input
-            $('.calendar-icon').on('click', function() {
-                $(this).siblings('.jalali-input').focus();
+            $('.t10-calendar-icon').on('click', function() {
+                $(this).siblings('.t10-jalali-input').focus();
             });
 
             // محدود کردن minDate برای پایان
@@ -284,7 +247,7 @@
             });
 
             // جلوگیری نرم از تایپ دستی (اختیاری - اگر می‌خواهید کاملاً غیرفعال کنید، preventDefault را برگردانید)
-            $('.jalali-input').on('keydown', function(e) {
+            $('.t10-jalali-input').on('keydown', function(e) {
                 // اگر می‌خواهید تایپ کاملاً ممنوع باشد:
                 // e.preventDefault();
                 // اما برای تجربه بهتر، فعلاً اجازه می‌دهیم (کاربر می‌تواند دستی وارد کند)
@@ -428,6 +391,7 @@
             }
         }
     </script>
+{% endblock %}
 
-</body>
-</html>
+{% block extra_js %}
+{% endblock %}
