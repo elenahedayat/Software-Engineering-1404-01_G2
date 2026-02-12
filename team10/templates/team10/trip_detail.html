@@ -1,4 +1,4 @@
-{% extends "team10/base.html" %}
+﻿{% extends "team10/base.html" %}
 {% load static %}
 {% block title %}جزئیات سفر | ایران‌نما{% endblock %}
 
@@ -128,7 +128,6 @@
             <span class="t10-activity-cost">{{ item.plan.cost|floatformat:0|default:"0" }} تومان</span>
           </div>
         </div>
-        <div class="t10-activity-emoji" aria-hidden="true">📍</div>
       </div>
       
       {% endfor %}
@@ -155,7 +154,7 @@
             <span class="t10-activity-cost">{{ hotel.cost|floatformat:0 }} تومان</span>
           </div>
         </div>
-        <div class="t10-activity-emoji" aria-hidden="true">🏨</div>
+        <!-- <div class="t10-activity-emoji" aria-hidden="true">🏨</div> -->
       </div>
       <div class="t10-transfer-row">
         <span class="t10-transfer-emoji">📅</span>
@@ -232,8 +231,6 @@
           return m.keys.some(function(k) { return type.toLowerCase().includes(String(k).toLowerCase()); });
         });
         const emoji = hit ? hit.emoji : "📍";
-        const emojiEl = row.querySelector('.t10-activity-emoji');
-        if (emojiEl) emojiEl.textContent = emoji;
         const badgeEmoji = row.querySelector('.t10-type-emoji');
         if (badgeEmoji) badgeEmoji.textContent = emoji;
       });
