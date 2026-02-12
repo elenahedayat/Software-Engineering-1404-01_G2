@@ -6,9 +6,6 @@ import { SCROLLING_IMAGES } from '@/constants';
 const firstHalf = SCROLLING_IMAGES.slice(0, Math.floor(SCROLLING_IMAGES.length / 2));
 const secondHalf = SCROLLING_IMAGES.slice(Math.floor(SCROLLING_IMAGES.length / 2));
 
-console.log(firstHalf.length)
-console.log(secondHalf.length)
-
 const HomePage = () => {
   const navigate = useNavigate();
 

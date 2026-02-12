@@ -1,8 +1,8 @@
 export const TRAVEL_SEASONS = [
-  { value: 'spring', label: 'بهار' },
-  { value: 'summer', label: 'تابستان' },
-  { value: 'autumn', label: 'پاییز' },
-  { value: 'winter', label: 'زمستان' }
+  { value: 'SPRING', label: 'بهار' },
+  { value: 'SUMMER', label: 'تابستان' },
+  { value: 'AUTUMN', label: 'پاییز' },
+  { value: 'WINTER', label: 'زمستان' }
 ];
 
 export const GEOGRAPHIC_REGIONS = [
@@ -14,9 +14,9 @@ export const GEOGRAPHIC_REGIONS = [
 ];
 
 export const BUDGET_LEVELS = [
-  { value: 'LOW', label: 'اقتصادی' },
+  { value: 'ECONOMY', label: 'اقتصادی' },
   { value: 'MEDIUM', label: 'معمولى' },
-  { value: 'HIGH', label: 'لوکس' }
+  { value: 'LUXURY', label: 'لوکس' }
 ];
 
 export const TRAVEL_STYLES = [
@@ -27,19 +27,20 @@ export const TRAVEL_STYLES = [
   { value: 'BUSINESS', label: 'کاری' }
 ];
 
-export const INITIAL_INTERESTS = [
-  { value: 'historical', label: 'تاریخی' },
-  { value: 'religious', label: 'مذهبی و زیارتی' },
-  { value: 'art_culture', label: 'فرهنگ و هنر' },
-  { value: 'shopping', label: 'بازار و خرید' },
-  { value: 'nature', label: 'طبیعت‌گردی' },
-  { value: 'food', label: 'غذا و خوراک' },
-  { value: 'study', label: 'آموزشی' },
-  { value: 'events', label: 'رویداد‌ و جشنواره' }
+export const INITIAL_INTERESTS = [  
+  { value: 'HISTORICAL', label: 'تاریخی' },
+  { value: 'RECREATIONAL' , label: 'تفریحی'},
+  { value: 'RELIGIOUS', label: 'مذهبی و زیارتی' },
+  { value: 'ART_CULTURE', label: 'فرهنگ و هنر' },
+  { value: 'SHOPPING', label: 'بازار و خرید' },
+  { value: 'NATURAL', label: 'طبیعت‌گردی' },
+  { value: 'DINING', label: 'غذا و خوراک' },
+  { value: 'STUDY', label: 'آموزشی' },
+  { value: 'EVENTS', label: 'رویداد‌ و جشنواره' }
 ];
 
 export const PROGRAM_DENSITY = [
-  { value: 'relaxed', label: 'کم‌تراکم (آرام)' },
-  { value: 'balanced', label: 'متوسط (برنامه‌ریزی شده)' },
-  { value: 'intensive', label: 'پرتراکم (فشرده)' }
+  { value: 'RELAXED', label: 'کم‌تراکم (آرام)' },
+  { value: 'BALANCED', label: 'متوسط (برنامه‌ریزی شده)' },
+  { value: 'INTENSIVE', label: 'پرتراکم (فشرده)' }
 ];

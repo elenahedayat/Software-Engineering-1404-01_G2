@@ -96,6 +96,8 @@ const SuggestDestinationForm = () => {
             interests: selectedInterestValues
         };
 
+        console.log(payload)
+
         try {
             await request(payload);
         } catch (err) {
@@ -187,7 +189,7 @@ const SuggestDestinationForm = () => {
                 {destinations && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20 animate-in fade-in slide-in-from-bottom-10 duration-700">
                         {destinations.map((dest: any, i: number) => (
-                            <DestinationCard key={i} {...dest} />
+                            <DestinationCard key={i} {...dest} style={formData.style ?? undefined} interests={selectedInterestValues} />
                         ))}
                     </div>
                 )}

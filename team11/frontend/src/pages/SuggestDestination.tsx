@@ -2,7 +2,7 @@ import SuggestDestinationForm from '../containers/suggest-destination/SuggestDes
 
 const SuggestDestination = () => {
   return (
-    <div className="min-h-screen pt-10">
+    <div className="min-h-screen pt-3">
       <SuggestDestinationForm />
     </div>
   );

@@ -8,7 +8,7 @@ const api = axios.create({
 });
 
 export const destinationApi = {
-    suggest: (data: any) => api.post('/destination', data),
+    suggest: (data: any) => api.post('/destinations', data),
 };
 
 export default api;

@@ -3,11 +3,13 @@ import MainLayout from '@/components/layouts/MainLayout';
 import HomePage from '@/pages/HomePage';
 import SuggestDestination from './pages/SuggestDestination';
 import CreateTrip from './pages/CreateTrip';
+import ScrollToTop from './components/ScrollToTop';
 
 
 function App() {
   return (
     <Router basename="/team11">
+      <ScrollToTop />
       <Routes>
         {/* Main Application Shell */}
         <Route path="/" element={<MainLayout />}>

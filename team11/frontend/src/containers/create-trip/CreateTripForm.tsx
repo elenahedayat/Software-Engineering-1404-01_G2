@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from '../../components/ui/Select';
 import Button from '../../components/ui/Button';
 import ChipButton from '@/components/ui/ChipButton';
@@ -6,11 +6,11 @@ import TextField from '@/components/ui/TextField';
 import { TRAVEL_STYLES, BUDGET_LEVELS, INITIAL_INTERESTS, PROGRAM_DENSITY } from '../suggest-destination/constants';
 import { PROVINCES_DETAILS } from '@/constants';
 import DatePicker from '@/components/ui/DatePicker';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const PROVINCES = Object.values(PROVINCES_DETAILS).map((prov) => ({ value: prov.province, label: prov.name }));
 
-const CITIES: { value: string; label: string }[] = [];
+const CITIES:  { value: string; label: string }[] = [];
 
 const CreateTripForm = () => {
   const [formData, setFormData] = useState<{
@@ -19,7 +19,7 @@ const CreateTripForm = () => {
     startDate: any | null; // Moment | null
     endDate: any | null; // Moment | null
     style: string | null;
-    budget: string | null;
+    budget?: string | null;
     density: string | null;
   }>({
     province: null,
@@ -37,6 +37,37 @@ const CreateTripForm = () => {
   const [newInterestLabel, setNewInterestLabel] = useState('');
 
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const provinceParam = searchParams.get('province');
+    const styleParam = searchParams.get('style');
+    const interestsParam = searchParams.get('interests');
+
+    if (provinceParam) {
+      setFormData(prev => ({ ...prev, province: provinceParam }));
+    }
+
+    if (styleParam) {
+      setFormData(prev => ({ ...prev, style: styleParam }));
+    }
+
+    if (interestsParam) {
+      const arr = interestsParam.split(',').map(s => s).filter(Boolean);
+      if (arr.length) {
+        setSelectedInterestValues(arr);
+        setAvailableInterests(prev => {
+          const missing = arr.filter(a => !prev.find(p => p.value === a));
+          if (missing.length === 0) return prev;
+          return [...prev, ...missing.map(m => ({ value: m, label: m.replace(/_/g, ' ') }))];
+        });
+      }
+    }
+
+    if (styleParam || (interestsParam && interestsParam.length > 0)) {
+      setMode('pro');
+    }
+  }, [searchParams]);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value === '' ? null : e.target.value;
@@ -67,17 +98,19 @@ const CreateTripForm = () => {
   };
 
   const handleCreate = (mode: 'quick' | 'pro') => {
-    let body = {...formData, interests: selectedInterestValues}
+    let payload = {...formData, interests: selectedInterestValues, budget_level: formData.budget}
+    delete payload.budget
+
     if (mode === 'quick')
-      body = {...body, interests: [], style: null, budget: null, density: null}
+      payload = {...payload, interests: [], style: null, budget_level: null, density: null}
     
-    body = {
-      ...body,
-      startDate: body.startDate?.format('YYYY-MM-DD'),
-      endDate: body.endDate?.format('YYYY-MM-DD')
+    payload = {
+      ...payload,
+      startDate: payload.startDate?.format('YYYY-MM-DD'),
+      endDate: payload.endDate?.format('YYYY-MM-DD')
     }
 
-    console.log(body)
+    console.log(payload)
   };
 
   const isFormValid = formData.province && formData.startDate;
@@ -94,7 +127,7 @@ const CreateTripForm = () => {
                     <h3 className="text-3xl font-black text-text-dark">ایجاد برنامه سفر</h3>
                 </div>
                 <div className="absolute right-0">
-                    <Button variant="cancel" onClick={() => navigate('/')} className="px-5 py-2 text-xs">
+                    <Button variant="cancel" onClick={() => navigate(-1)} className="px-5 py-2 text-xs">
                         <i className="fa-solid fa-arrow-right ml-2 text-[10px]"></i>
                         بازگشت
                     </Button>
