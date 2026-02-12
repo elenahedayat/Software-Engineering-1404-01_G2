@@ -635,4 +635,32 @@ def base(request):
 
 @team10_login_required
 def create_trip(request):
-    return render(request, f"{TEAM_NAME}/create_trip.html")
+    context = {
+        "is_success": True,
+        "error": None,
+    }
+
+    if request.method == "POST":
+        data = {
+            "destination": (request.POST.get("destination") or "").strip(),
+            "start_date": (request.POST.get("start_date") or "").strip(),
+            "end_date": (request.POST.get("end_date") or "").strip(),
+            "budget_level": (request.POST.get("budget_level") or "MODERATE").strip(),
+            "preferences": request.POST.getlist("preferences"),
+            "travelers_count": request.POST.get("travelers_count") or 1,
+        }
+        try:
+            data["travelers_count"] = int(_to_en_digits(str(data["travelers_count"])))
+        except ValueError:
+            data["travelers_count"] = 1
+
+        user_id = str(request.user.id) if request.user.is_authenticated else "0"
+        try:
+            trip_planning_service.create_initial_trip(data, user_id)
+            context["is_success"] = True
+            context["error"] = None
+        except ValueError as e:
+            context["is_success"] = False
+            context["error"] = str(e)
+
+    return render(request, f"{TEAM_NAME}/create_trip.html", context)

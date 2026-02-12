@@ -24,7 +24,8 @@
             <div class="line"></div>
         </div>
 
-        <form id="create-trip-form" class="auth-card create-trip-card">
+        <form id="create-trip-form" class="auth-card create-trip-card" method="post">
+            {% csrf_token %}
             <p class="form-section-label">اطلاعات اصلی سفر</p>
 
             <!-- مقصد -->
@@ -156,10 +157,20 @@
             </div>
         </form>
 
-        <div id="result-area" class="result-area auth-card">
-            <h2>برنامه سفر شما آماده است!</h2>
+        <div id="result-area" class="result-area auth-card" data-initial-success="{% if is_success %}1{% else %}0{% endif %}" data-initial-error="{% if error %}1{% else %}0{% endif %}">
+            <h2 id="result-title">
+                {% if is_success %}
+                    برنامه سفر شما آماده است!
+                {% else %}
+                    خطا در ایجاد سفر
+                {% endif %}
+            </h2>
             <div id="t10-celebrate-badge" class="t10-celebrate-badge" aria-hidden="true"></div>
-            <div id="result-content"></div>
+            <div id="result-content">
+                {% if error %}
+                    <p class="error-message">{{ error }}</p>
+                {% endif %}
+            </div>
             <button class="auth-btn btn-submit-login" onclick="window.location.reload()">سفر جدید</button>
         </div>
     </main>
@@ -660,9 +671,19 @@
         const loading = document.getElementById('loading');
         const resultArea = document.getElementById('result-area');
         const resultContent = document.getElementById('result-content');
+        const resultTitle = document.getElementById('result-title');
         const celebrateBadge = document.getElementById('t10-celebrate-badge');
         const submitBtn = document.getElementById('submit-btn');
         const resetBtn = document.getElementById('t10-reset-btn');
+
+        function setResultState(isSuccess) {
+            if (resultTitle) {
+                resultTitle.textContent = isSuccess ? 'برنامه سفر شما آماده است!' : 'خطا در ایجاد سفر';
+            }
+            if (!isSuccess && celebrateBadge) {
+                celebrateBadge.classList.remove('is-visible', 'is-animating');
+            }
+        }
 
         const DEFAULT_TRAVELERS = (function() {
             const travelersInput = document.getElementById('travelers-input');
@@ -677,7 +698,13 @@
         })();
 
         loading.style.display = 'none';
-        resultArea.style.display = 'none';
+        const hasInitialError = resultArea && resultArea.dataset.initialError === '1';
+        if (resultArea) {
+            resultArea.style.display = hasInitialError ? 'block' : 'none';
+        }
+        if (hasInitialError) {
+            setResultState(false);
+        }
 
         function runConfetti() {
             if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -779,6 +806,7 @@
                 celebrateBadge.textContent = '';
                 celebrateBadge.classList.remove('is-visible', 'is-animating');
             }
+            setResultState(true);
 
             if (form) {
                 form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -836,6 +864,7 @@
             }
 
             if (!startGreg || !endGreg) {
+                setResultState(false);
                 resultContent.innerHTML = `<p class="error-message">لطفاً تاریخ‌ها را وارد کنید</p>`;
                 loading.style.display = 'none';
                 resultArea.style.display = 'block';
@@ -860,6 +889,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
+                    setResultState(true);
                     const hasTripId = Boolean(result.trip_id);
                     resultContent.innerHTML = `
                         <p class="success-message">سفر با موفقیت ایجاد شد!</p>
@@ -871,12 +901,14 @@
                     runConfetti();
                     showCelebrateBadge();
                 } else {
+                    setResultState(false);
                     if (celebrateBadge) {
                         celebrateBadge.classList.remove('is-visible', 'is-animating');
                     }
                     resultContent.innerHTML = `<p class="error-message">خطا: ${result.error || 'مشکلی پیش آمد'}</p>`;
                 }
             } catch (err) {
+                setResultState(false);
                 if (celebrateBadge) {
                     celebrateBadge.classList.remove('is-visible', 'is-animating');
                 }

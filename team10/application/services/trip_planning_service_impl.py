@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, date
 from typing import List, Optional, Tuple, Dict, Any
 from dataclasses import dataclass
 
+import jdatetime
+
 from django.db import transaction
 from django.db.models import Q
 
@@ -86,10 +88,17 @@ class TripPlanningServiceImpl(TripPlanningService):
         start_date = datetime.fromisoformat(requirements_data['start_date'])
         end_date = datetime.fromisoformat(requirements_data['end_date'])
         today = datetime.now().date()
+
+        def _jalali_date_str(date_value: date) -> str:
+            jalali = jdatetime.date.fromgregorian(date=date_value).strftime("%Y/%m/%d")
+            return jalali.translate(str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹"))
+
         if start_date.date() < today:
-            raise ValueError(f"Start date cannot be before today: {start_date}")
+            jalali_start = _jalali_date_str(start_date.date())
+            raise ValueError(f"تاریخ شروع نمی‌تواند قبل از امروز باشد: {jalali_start}")
         if end_date.date() < today:
-            raise ValueError(f"End date cannot be before today: {end_date}")
+            jalali_end = _jalali_date_str(end_date.date())
+            raise ValueError(f"تاریخ پایان نمی‌تواند قبل از امروز باشد: {jalali_end}")
 
         # Search region via facilities service (done outside transaction - read-only external call)
         destination_query = requirements_data['destination']
