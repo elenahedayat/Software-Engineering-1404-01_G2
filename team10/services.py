@@ -18,7 +18,8 @@ wiki_service = MockWikiClient()
 # Singleton application service with injected dependencies
 trip_planning_service = TripPlanningServiceImpl(
     facilities_service=facilities_service,
-    recommendation_service=recommendation_service
+    recommendation_service=recommendation_service,
+    wiki_service=wiki_service,
 )
 
 __all__ = [

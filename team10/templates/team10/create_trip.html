@@ -1,4 +1,4 @@
-﻿{% extends "team10/base.html" %}
+{% extends "team10/base.html" %}
 {% load static %}
 
 {% block title %}ایجاد برنامه سفر | ایران‌نما{% endblock %}
@@ -113,32 +113,18 @@
                 </div>
             </div>
 
-            <!-- سبک و ترجیحات اصلی (چندگزینه‌ای) -->
+            <!-- سبک و ترجیحات اصلی (چندگزینه‌ای) - از لیست یکپارچه backend -->
             <div class="form-group">
                 <p class="form-section-label form-section-label--inner">ترجیحات شخصی</p>
                 <label>سبک سفر من (می‌توانید چند مورد انتخاب کنید)</label>
                 <div class="chips-container">
+                    {% for tag, label in styles %}
                     <label class="chip">
-                        <input type="checkbox" name="preferences" value="nature"> طبیعت‌گردی
+                        <input type="checkbox" name="preferences" value="{{ tag }}"> {{ label }}
                     </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="history"> تاریخی و فرهنگی
-                    </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="food"> غذاشناسی و رستوران‌گردی
-                    </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="relax"> آرامش و استراحت
-                    </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="adventure"> ماجراجویی و هیجانی
-                    </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="shopping"> خرید و بازارگردی
-                    </label>
-                    <label class="chip">
-                        <input type="checkbox" name="preferences" value="nightlife"> تفریحات شبانه
-                    </label>
+                    {% empty %}
+                    <span>سبکی تعریف نشده است.</span>
+                    {% endfor %}
                 </div>
             </div>
 

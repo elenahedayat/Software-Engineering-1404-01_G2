@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from core.auth import api_login_required
 from .models import Trip, TripRequirements, PreferenceConstraint, TransferPlan
-from .services import trip_planning_service
+from .services import trip_planning_service, facilities_service
 
 
 def team10_login_required(view_func):
@@ -24,7 +24,7 @@ def team10_login_required(view_func):
 
 TEAM_NAME = "team10"
 
-# ---- Constants
+# ---- Constants: canonical trip styles (tag, label_fa) – used in planning and all frontends
 STYLES = [
     ("nature", "طبیعت"),
     ("history", "تاریخ و باستان"),
@@ -34,6 +34,8 @@ STYLES = [
     ("religious", "مذهبی"),
     ("adventure", "ماجراجویی"),
     ("shopping", "خرید"),
+    ("relax", "آرامش و استراحت"),
+    ("nightlife", "تفریحات شبانه"),
 ]
 
 CITIES = [
@@ -347,8 +349,8 @@ def _get_status_fa(status: str) -> str:
 def trip_detail(request, trip_id: int):
     """نمایش جزئیات یک سفر خاص"""
     try:
-        qs = _safe_trips_queryset(request)
-        trip = qs.filter(id=trip_id).first()
+        user_id = str(request.user.id) if hasattr(request.user, 'id') else None
+        trip, dest_info = trip_planning_service.view_trip(trip_id, user_id)
         if not trip:
             raise Http404()
         req = trip.requirements
@@ -393,11 +395,14 @@ def trip_detail(request, trip_id: int):
                 'activities': days_grouped[d],
             })
         
-        # Convert hotel dates to Jalali
+        # Convert hotel dates to Jalali and resolve hotel names from facilities service
         hotel_schedules = []
         for hotel in trip.hotel_schedules.all():
+            facility = facilities_service.get_facility_by_id(hotel.hotel_id)
+            hotel_name = facility.name if facility else f"هتل (شناسه: {hotel.hotel_id})"
             hotel_schedules.append({
                 'hotel_id': hotel.hotel_id,
+                'hotel_name': hotel_name,
                 'rooms_count': hotel.rooms_count,
                 'cost': hotel.cost,
                 'start_at_jalali': to_jalali_str(hotel.start_at.date() if hotel.start_at else None),
@@ -412,6 +417,7 @@ def trip_detail(request, trip_id: int):
             "team10/trip_detail.html",
             {
                 "trip": trip,
+                "destination_info": dest_info,
                 "days_count": days_count,
                 "total_cost": trip.calculate_total_cost(),
                 "days_list": days_list,
@@ -519,11 +525,12 @@ def trip_cost(request, trip_id: int):
             {'name': 'تفریحی/سایر', 'cost': other_cost, 'percent': calc_percent(other_cost), 'type': 'other'},
         ]
         
-        # Prepare details for expandable sections
-        hotel_details = [
-            {'description': f'هتل (شناسه: {s.hotel_id}) - {s.rooms_count} اتاق', 'cost': float(s.cost)}
-            for s in trip.hotel_schedules.all()
-        ]
+        # Prepare details for expandable sections (resolve hotel names from facilities service)
+        hotel_details = []
+        for s in trip.hotel_schedules.all():
+            facility = facilities_service.get_facility_by_id(s.hotel_id)
+            name = facility.name if facility else f"هتل (شناسه: {s.hotel_id})"
+            hotel_details.append({'description': f'{name} - {s.rooms_count} اتاق', 'cost': float(s.cost)})
         
         # Combine transfer details with activity transport details
         transport_details = transfer_details + daily_plans_by_type.get('TRANSPORT', [])
@@ -558,7 +565,34 @@ def trip_cost(request, trip_id: int):
 @team10_login_required
 def trip_styles(request, trip_id: int):
     """صفحه انتخاب سبک سفر"""
-    return render(request, "team10/trip_styles.html", {"trip_id": trip_id, "styles": STYLES})
+    if request.method == "POST":
+        styles_selected = request.POST.getlist("styles")
+        try:
+            qs = _safe_trips_queryset(request)
+            trip = qs.filter(id=trip_id).first()
+            if not trip:
+                raise Http404()
+            trip_planning_service.regenerate_by_styles(trip_id, styles_selected)
+            return redirect("team10:trip_detail", trip_id=trip_id)
+        except Http404:
+            raise
+        except Exception:
+            pass  # Fall through to re-render with error
+    try:
+        qs = _safe_trips_queryset(request)
+        trip = qs.filter(id=trip_id).first()
+        if not trip:
+            raise Http404()
+        current_styles = list(trip.requirements.constraints.values_list("tag", flat=True))
+    except Http404:
+        raise
+    except Exception:
+        current_styles = []
+    return render(request, "team10/trip_styles.html", {
+        "trip_id": trip_id,
+        "styles": STYLES,
+        "current_styles": current_styles,
+    })
 
 @team10_login_required
 def trip_replan(request, trip_id: int):

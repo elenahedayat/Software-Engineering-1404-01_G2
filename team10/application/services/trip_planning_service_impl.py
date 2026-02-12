@@ -7,6 +7,7 @@ import jdatetime
 from django.db import transaction
 from django.db.models import Q
 
+from ...infrastructure import WikiServicePort
 from ...models import Trip as TripModel, TripRequirements as TripRequirementsModel, PreferenceConstraint as PreferenceConstraintModel
 from ...domain.entities.trip import Trip
 from ...domain.models.change_trigger import ChangeTrigger
@@ -62,10 +63,12 @@ class TripPlanningServiceImpl(TripPlanningService):
     def __init__(
         self,
         facilities_service: FacilitiesServicePort,
-        recommendation_service: RecommendationServicePort
+        recommendation_service: RecommendationServicePort,
+        wiki_service: WikiServicePort,
     ):
         self._facilities_service = facilities_service
         self._recommendation_service = recommendation_service
+        self._wiki_service = wiki_service
 
     def create_initial_trip(self, requirements_data: dict, user_id: str) -> TripModel:
         """Create an initial trip based on user requirements.
@@ -537,10 +540,10 @@ class TripPlanningServiceImpl(TripPlanningService):
         for rec in recommended_places:
             facility = self._facilities_service.get_facility_by_place_id(rec.place_id, region_id)
             if facility:
-                # Adjust score based on preference match
+                # Adjust score based on preference match (religious <-> religion)
                 adjusted_score = rec.score
                 for tag in facility.tags:
-                    if tag in preferences:
+                    if tag in preferences or (tag == 'religion' and 'religious' in preferences):
                         adjusted_score += 0.2  # Boost for matching preferences
                 attractions.append((facility, adjusted_score))
         
@@ -599,8 +602,12 @@ class TripPlanningServiceImpl(TripPlanningService):
             
             # For golden hour, prefer attractions matching top preferences
             if is_golden_hour and preferences:
-                # Check if this attraction matches the highest priority preference
-                matches_top_preference = any(tag in preferences[:2] for tag in facility.tags)
+                # Check if this attraction matches the highest priority preference (religious <-> religion)
+                top_prefs = set(preferences[:2])
+                matches_top_preference = any(
+                    tag in top_prefs or (tag == 'religion' and 'religious' in top_prefs)
+                    for tag in facility.tags
+                )
                 if matches_top_preference:
                     selected_attraction = facility
                     attraction_index = i + 1
@@ -718,11 +725,13 @@ class TripPlanningServiceImpl(TripPlanningService):
         
         Args:
             tags: Facility tags
-            preferences: User preferences
+            preferences: User preferences (canonical: nature, history, culture, food, festival, religious, adventure, shopping, relax, nightlife)
             
         Returns:
             Activity type string
         """
+        # Facility tag "religion" matches user preference "religious"
+        effective_tags = set(tags) | ({'religious'} if 'religion' in tags else set())
         tag_to_activity = {
             'nature': 'OUTDOOR',
             'history': 'CULTURE',
@@ -734,11 +743,13 @@ class TripPlanningServiceImpl(TripPlanningService):
             'nightlife': 'NIGHTLIFE',
             'modern': 'SIGHTSEEING',
             'religion': 'CULTURE',
+            'religious': 'CULTURE',
+            'festival': 'CULTURE',
         }
         
         # First check if any tag matches user preferences
         for pref in preferences:
-            if pref in tags:
+            if pref in effective_tags:
                 return tag_to_activity.get(pref, 'SIGHTSEEING')
         
         # Otherwise use first matching tag
@@ -810,10 +821,11 @@ class TripPlanningServiceImpl(TripPlanningService):
 
         return trip
 
-    def view_trip(self, trip_id: int, user_id: str) -> TripModel:
-        """View trip details."""
+    def view_trip(self, trip_id: int, user_id: str) ->  Tuple[Trip, str]:
+        """View trip details and destination_description"""
         trip = TripModel.objects.get(id=trip_id, user_id=user_id)
-        return trip
+        destination_description = self._wiki_service.get_destination_basic_info(trip.destination_name)
+        return trip, destination_description
 
     def analyze_costs_and_budget(self, trip_id: int, budget_limit: float) -> CostAnalysisResult:
         """Analyze trip costs against a budget."""
@@ -926,14 +938,17 @@ class TripPlanningServiceImpl(TripPlanningService):
         return result
 
     def _get_preference_description(self, preference_tag: str) -> str:
-        """Get description for preference tag."""
+        """Get description for preference tag (canonical styles)."""
         descriptions = {
             'nature': 'Interested in nature and outdoor activities',
             'history': 'Interested in historical and cultural sites',
+            'culture': 'Interested in culture and arts',
             'food': 'Interested in local cuisine and restaurants',
-            'relax': 'Prefers relaxation and leisure activities',
+            'festival': 'Interested in festivals and events',
+            'religious': 'Interested in religious and spiritual sites',
             'adventure': 'Seeks adventurous and thrilling experiences',
             'shopping': 'Enjoys shopping and markets',
-            'nightlife': 'Interested in nighttime entertainment'
+            'relax': 'Prefers relaxation and leisure activities',
+            'nightlife': 'Interested in nighttime entertainment',
         }
         return descriptions.get(preference_tag, f'Preference: {preference_tag}')

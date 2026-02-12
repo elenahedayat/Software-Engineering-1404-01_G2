@@ -1,4 +1,4 @@
-﻿{% extends "team10/base.html" %}
+{% extends "team10/base.html" %}
 {% load static %}
 {% block title %}جزئیات سفر | ایران‌نما{% endblock %}
 
@@ -95,6 +95,13 @@
                 </div>
             </div>
         </div>
+        
+        <section class="t10-card t10-destination-description">
+          <h3 class="t10-section-title">درباره مقصد</h3>
+          <div class="t10-description-content">
+            {{ destination_info|linebreaks }}
+          </div>
+        </section>
 
   <section class="t10-card">
     <h3>برنامه روزانه</h3>
@@ -167,7 +174,7 @@
       <div class="t10-activity-row">
         <div class="t10-activity-time">🏨 هتل</div>
         <div class="t10-activity-main">
-          <div class="t10-activity-title">شناسه هتل: {{ hotel.hotel_id }}</div>
+          <div class="t10-activity-title">{{ hotel.hotel_name }}</div>
           <div class="t10-activity-meta">
             <span class="t10-type-badge">اتاق‌ها: {{ hotel.rooms_count }}</span>
             <span class="t10-activity-cost">{{ hotel.cost|floatformat:0 }} تومان</span>
