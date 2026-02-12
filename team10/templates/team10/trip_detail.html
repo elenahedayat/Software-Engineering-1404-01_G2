@@ -21,7 +21,7 @@
                 </div>
                 <div class="info-item">
                     <span class="label">تاریخ شروع</span>
-                    <span class="value">{{ trip.requirements.start_at|date:"Y-m-d"|default:"—" }}</span>
+                    <span class="value">{{ start_at_jalali|default:"—" }}</span>
                 </div>
                 <div class="info-item">
                     <span class="label">وضعیت</span>
@@ -48,7 +48,7 @@
     {% for day in days_list %}
     <div class="t10-day-block" style="margin-bottom: 2rem; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
       <h4 style="background: #f5f5f5; padding: 0.5rem 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 8px 8px 0 0;">
-        روز {{ day.day_number }} - {{ day.date|date:"Y-m-d" }}
+        روز {{ day.day_number }} - {{ day.date_jalali }}
       </h4>
       
       {% for item in day.activities %}
@@ -107,7 +107,7 @@
         <div><strong>هزینه:</strong> {{ hotel.cost|floatformat:0 }} تومان</div>
       </div>
       <div class="t10-transfer">
-        بازه اقامت: {{ hotel.start_at|date:"Y-m-d"|default:"-" }} تا {{ hotel.end_at|date:"Y-m-d"|default:"-" }}
+        بازه اقامت: {{ hotel.start_at_jalali|default:"-" }} تا {{ hotel.end_at_jalali|default:"-" }}
       </div>
     </div>
     {% empty %}
