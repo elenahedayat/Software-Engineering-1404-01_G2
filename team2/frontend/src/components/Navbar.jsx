@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BookOpen, PlusCircle, Home } from 'lucide-react'
+import { BookOpen, PlusCircle, Home, Search, User } from 'lucide-react'
 
 export default function Navbar() {
   const location = useLocation()
 
   const linkClass = (path) =>
-    `flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+    `flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
       location.pathname === path
         ? 'bg-forest text-white'
         : 'text-green-100 hover:bg-leaf hover:text-white'
@@ -23,10 +23,18 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link to="/" className={linkClass('/')}>
               <Home className="w-4 h-4" />
               <span>خانه</span>
+            </Link>
+            <Link to="/search" className={linkClass('/search')}>
+              <Search className="w-4 h-4" />
+              <span>جستجو</span>
+            </Link>
+            <Link to="/my-articles" className={linkClass('/my-articles')}>
+              <User className="w-4 h-4" />
+              <span>مقالات من</span>
             </Link>
             <Link to="/articles/new" className={linkClass('/articles/new')}>
               <PlusCircle className="w-4 h-4" />
