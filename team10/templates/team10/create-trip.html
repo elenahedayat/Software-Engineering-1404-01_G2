@@ -24,11 +24,17 @@
             <div class="line"></div>
         </div>
 
-        <form id="create-trip-form" class="auth-card">
+        <form id="create-trip-form" class="auth-card create-trip-card">
+            <p class="form-section-label">اطلاعات اصلی سفر</p>
+
             <!-- مقصد -->
             <div class="form-group">
                 <label for="destination">مقصد <span class="required">*</span></label>
-                <input type="text" id="destination" name="destination" placeholder="مثال: اصفهان، شیراز، کیش، مشهد..." required autocomplete="off">
+                <div class="autocomplete-wrapper" id="destination-autocomplete">
+                    <input type="text" id="destination" name="destination" placeholder="مثال: اصفهان، شیراز، کیش، مشهد..." required autocomplete="off" aria-autocomplete="list" aria-expanded="false" aria-controls="destination-suggestions">
+                    <div id="destination-suggestions" class="autocomplete-panel" role="listbox" aria-label="پیشنهاد مقصد"></div>
+                </div>
+                <small class="field-hint">حداقل ۲ حرف وارد کنید تا پیشنهادها نمایش داده شوند.</small>
             </div>
 
             <!-- تاریخ‌ها -->
@@ -52,21 +58,63 @@
                 </div>
             </div>
 
+            <div class="t10-inline-row">
+                <!-- تعداد نفرات (بدون لیست: فقط عدد + دکمه کم/زیاد) -->
+                <div class="form-group t10-inline-col">
+                    <label for="travelers-input">تعداد مسافران</label>
 
-            <!-- تعداد نفرات -->
-            <div class="form-group">
-                <label for="travelers">تعداد مسافران</label>
-                <select id="travelers" name="travelers_count">
-                    <option value="1">۱ نفر (تنها)</option>
-                    <option value="2" selected>۲ نفر</option>
-                    <option value="3">۳ نفر</option>
-                    <option value="4">۴ نفر</option>
-                    <option value="5+">۵ نفر یا بیشتر</option>
-                </select>
+                    <!-- ✅ فیلد واقعی که بک‌اند می‌گیرد (مخفی) -->
+                    <select id="travelers" name="travelers_count" class="ui-hidden-control travelers-hidden-select" aria-hidden="true" tabindex="-1">
+                        <!-- گزینه‌ها توسط JS ساخته می‌شوند (۱..۲۰) -->
+                    </select>
+
+                    <div class="t10-control-surface">
+                        <div class="travelers-stepper travelers-stepper--premium" role="group" aria-label="کنترل تعداد مسافران">
+                            <button type="button" class="stepper-btn stepper-btn--plus" id="travelers-plus" aria-label="افزایش تعداد مسافران" title="افزایش">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+
+                            <input
+                                id="travelers-input"
+                                class="stepper-input"
+                                type="text"
+                                inputmode="numeric"
+                                pattern="[0-9۰-۹]*"
+                                value="2"
+                                aria-label="تعداد مسافران"
+                                autocomplete="off"
+                            >
+
+                            <button type="button" class="stepper-btn stepper-btn--minus" id="travelers-minus" aria-label="کاهش تعداد مسافران" title="کاهش">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <small id="travelers-hint" class="field-hint travelers-inline-hint" aria-live="polite">بین ۱ تا ۲۰ نفر</small>
+                </div>
+
+                <!-- سطح بودجه -->
+                <div class="form-group t10-inline-col">
+                    <label for="budget_level">سطح بودجه</label>
+                    <select id="budget_level" name="budget_level" class="ui-hidden-control" aria-hidden="true" tabindex="-1">
+                        <option value="ECONOMY">اقتصادی</option>
+                        <option value="MODERATE" selected>متوسط</option>
+                        <option value="LUXURY">لوکس</option>
+                    </select>
+                    <div class="t10-control-surface">
+                        <div class="budget-segmented" role="group" aria-label="انتخاب سطح بودجه">
+                            <button type="button" class="budget-pill" data-value="ECONOMY">اقتصادی</button>
+                            <button type="button" class="budget-pill" data-value="MODERATE">متوسط</button>
+                            <button type="button" class="budget-pill" data-value="LUXURY">لوکس</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- سبک و ترجیحات اصلی (چندگزینه‌ای) -->
             <div class="form-group">
+                <p class="form-section-label form-section-label--inner">ترجیحات شخصی</p>
                 <label>سبک سفر من (می‌توانید چند مورد انتخاب کنید)</label>
                 <div class="chips-container">
                     <label class="chip">
@@ -91,16 +139,6 @@
                         <input type="checkbox" name="preferences" value="nightlife"> تفریحات شبانه
                     </label>
                 </div>
-            </div>
-
-            <!-- سطح بودجه -->
-            <div class="form-group">
-                <label for="budget_level">سطح بودجه</label>
-                <select id="budget_level" name="budget_level">
-                    <option value="ECONOMY">اقتصادی</option>
-                    <option value="MODERATE" selected>متوسط</option>
-                    <option value="LUXURY">لوکس</option>
-                </select>
             </div>
 
             <!-- دکمه ارسال -->
@@ -187,6 +225,354 @@
             return { year: gy, month: gm, day: gd };
         }
 
+        const LOCAL_IRAN_CITIES = [
+            "تهران", "مشهد", "اصفهان", "شیراز", "تبریز", "کرج", "قم", "اهواز", "رشت", "کرمانشاه",
+            "ارومیه", "زاهدان", "همدان", "یزد", "کرمان", "ساری", "گرگان", "قزوین", "اراک", "سنندج",
+            "بندرعباس", "بوشهر", "کیش", "قشم", "کاشان", "نیشابور", "دزفول", "آبادان", "لاهیجان", "اردبیل",
+            "زنجان", "خرم‌آباد", "یاسوج", "بیرجند", "سبزوار", "ملایر", "مراغه", "نجف‌آباد", "شاهین‌شهر", "اندیمشک"
+        ];
+
+        function toPersianDigits(value) {
+            return String(value).replace(/\d/g, function(digit) {
+                return "۰۱۲۳۴۵۶۷۸۹"[digit];
+            });
+        }
+
+        function escapeHtml(raw) {
+            return raw
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function cityIconSvg(city) {
+            const iconClass = "autocomplete-icon-svg";
+            if (city === "تهران") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L9 10h2l-1.3 11L14 10h2L12 3z" fill="currentColor"/><circle cx="12" cy="2.5" r="1.2" fill="currentColor"/></svg>`;
+            }
+            if (city === "مشهد") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8 20v-4h8v4" stroke="currentColor" stroke-width="1.8"/><path d="M7 16h10c0-3-2.2-5.5-5-5.5S7 13 7 16z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="8" r="1.1" fill="currentColor"/></svg>`;
+            }
+            if (city === "اصفهان") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6 18c0-3.5 2.7-6.3 6-6.3s6 2.8 6 6.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 18v-2.5m6 2.5v-2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+            }
+            if (city === "شیراز") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 8c1.8-3.2 6-2.8 6 0a3 3 0 0 1-3 3c-1.2 0-2.2-.6-3-1.8C11.2 10.4 10.2 11 9 11a3 3 0 0 1-3-3c0-2.8 4.2-3.2 6 0z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>`;
+            }
+            if (city === "کیش") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M11 20v-8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M11 12c1.5-2.2 3.8-3.2 6.3-2.8M11 10.5c1.4-1.9 3.4-3 5.8-3.2M11 13.5c1.3-1.4 3-2.1 4.9-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`;
+            }
+            if (city === "تبریز") {
+                return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 20v-6l5-3 5 3v6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 7l3 2.2L12 11 9 9.2 12 7z" fill="currentColor"/></svg>`;
+            }
+            return `<svg class="${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s6-5.6 6-10a6 6 0 1 0-12 0c0 4.4 6 10 6 10z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="11" r="2.2" fill="currentColor"/></svg>`;
+        }
+
+        function highlightMatch(city, query) {
+            const start = city.indexOf(query);
+            if (start === -1 || !query) {
+                return escapeHtml(city);
+            }
+            const end = start + query.length;
+            const before = escapeHtml(city.slice(0, start));
+            const match = escapeHtml(city.slice(start, end));
+            const after = escapeHtml(city.slice(end));
+            return `${before}<mark>${match}</mark>${after}`;
+        }
+
+        function initDestinationAutocomplete() {
+            const input = document.getElementById('destination');
+            const wrapper = document.getElementById('destination-autocomplete');
+            const panel = document.getElementById('destination-suggestions');
+            if (!input || !wrapper || !panel) {
+                return;
+            }
+
+            let filteredCities = [];
+            let activeIndex = -1;
+
+            function closePanel() {
+                panel.classList.remove('is-open');
+                input.setAttribute('aria-expanded', 'false');
+                input.removeAttribute('aria-activedescendant');
+                activeIndex = -1;
+            }
+
+            function openPanel() {
+                panel.classList.add('is-open');
+                input.setAttribute('aria-expanded', 'true');
+            }
+
+            function renderSuggestions(query) {
+                if (query.length < 2) {
+                    panel.innerHTML = '';
+                    closePanel();
+                    return;
+                }
+
+                filteredCities = LOCAL_IRAN_CITIES.filter(function(city) {
+                    return city.includes(query);
+                });
+
+                if (filteredCities.length === 0) {
+                    panel.innerHTML = `
+                        <div class="autocomplete-empty">
+                            ${cityIconSvg('')}
+                            <span>نتیجه‌ای پیدا نشد</span>
+                        </div>
+                    `;
+                    openPanel();
+                    return;
+                }
+
+                panel.innerHTML = filteredCities.map(function(city, index) {
+                    return `
+                        <button type="button" class="autocomplete-item" role="option" id="destination-option-${index}" aria-selected="false" data-index="${index}" data-city="${escapeHtml(city)}">
+                            <span class="autocomplete-icon">${cityIconSvg(city)}</span>
+                            <span class="autocomplete-text">${highlightMatch(city, query)}</span>
+                        </button>
+                    `;
+                }).join('');
+                openPanel();
+            }
+
+            function setActive(index) {
+                const items = panel.querySelectorAll('.autocomplete-item');
+                if (!items.length) {
+                    return;
+                }
+                items.forEach(function(item) {
+                    item.classList.remove('is-active');
+                    item.setAttribute('aria-selected', 'false');
+                });
+                const safeIndex = Math.max(0, Math.min(index, items.length - 1));
+                const activeItem = items[safeIndex];
+                activeItem.classList.add('is-active');
+                activeItem.setAttribute('aria-selected', 'true');
+                input.setAttribute('aria-activedescendant', activeItem.id);
+                activeItem.scrollIntoView({ block: 'nearest' });
+                activeIndex = safeIndex;
+            }
+
+            function selectCity(city) {
+                input.value = city;
+                closePanel();
+            }
+
+            input.addEventListener('input', function() {
+                const query = input.value.trim();
+                renderSuggestions(query);
+            });
+
+            input.addEventListener('keydown', function(event) {
+                const items = panel.querySelectorAll('.autocomplete-item');
+                if (!panel.classList.contains('is-open') || !items.length) {
+                    if (event.key === 'ArrowDown' && input.value.trim().length >= 2) {
+                        renderSuggestions(input.value.trim());
+                    }
+                    return;
+                }
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    setActive(activeIndex + 1);
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    setActive(activeIndex <= 0 ? items.length - 1 : activeIndex - 1);
+                } else if (event.key === 'Enter') {
+                    if (activeIndex >= 0 && filteredCities[activeIndex]) {
+                        event.preventDefault();
+                        selectCity(filteredCities[activeIndex]);
+                    }
+                } else if (event.key === 'Escape') {
+                    closePanel();
+                }
+            });
+
+            panel.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+            });
+
+            panel.addEventListener('click', function(event) {
+                const row = event.target.closest('.autocomplete-item');
+                if (!row) {
+                    return;
+                }
+                const city = row.getAttribute('data-city');
+                if (city) {
+                    selectCity(city);
+                }
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!wrapper.contains(event.target)) {
+                    closePanel();
+                }
+            });
+        }
+
+        function initTravelersStepper() {
+            const travelersSelect = document.getElementById('travelers');
+            const travelersInput = document.getElementById('travelers-input');
+            const travelersHint = document.getElementById('travelers-hint');
+            const plusBtn = document.getElementById('travelers-plus');
+            const minusBtn = document.getElementById('travelers-minus');
+            if (!travelersSelect || !travelersInput || !travelersHint || !plusBtn || !minusBtn) {
+                return;
+            }
+
+            const minTravelers = 1;
+            const maxTravelers = 20;
+
+            // build real select options (1..20) - backend receives travelers_count
+            travelersSelect.innerHTML = '';
+            for (let i = minTravelers; i <= maxTravelers; i++) {
+                const option = document.createElement('option');
+                option.value = String(i);
+                option.textContent = i === 1 ? `${toPersianDigits(i)} نفر (تنها)` : `${toPersianDigits(i)} نفر`;
+                travelersSelect.appendChild(option);
+            }
+
+            const defaultHint = `بین ${toPersianDigits(minTravelers)} تا ${toPersianDigits(maxTravelers)} نفر`;
+            const minWarning = `حداقل ${toPersianDigits(minTravelers)} نفر`;
+            const maxWarning = "حداکثر ۲۰ نفر";
+
+            function clamp(n) {
+                return Math.max(minTravelers, Math.min(n, maxTravelers));
+            }
+
+            function setHint(message, isWarning) {
+                travelersHint.textContent = message || defaultHint;
+                travelersHint.classList.toggle('is-warning', Boolean(isWarning));
+            }
+
+            // initial value (use 2 by default)
+            let travelersCount = 2;
+
+            function syncAll() {
+                travelersSelect.value = String(travelersCount);
+                travelersInput.value = toPersianDigits(travelersCount);
+            }
+
+            function normalizeDigits(raw) {
+                return persianToEnglish(String(raw || '')).replace(/[^\d]/g, '');
+            }
+
+            function parseTypedValue(raw) {
+                const normalized = normalizeDigits(raw);
+                if (!normalized) return null;
+                const parsed = parseInt(normalized, 10);
+                return Number.isFinite(parsed) ? parsed : null;
+            }
+
+            function increaseTravelers() {
+                if (travelersCount >= maxTravelers) {
+                    setHint(maxWarning, true);
+                    syncAll();
+                    return;
+                }
+                travelersCount += 1;
+                syncAll();
+                setHint();
+            }
+
+            function decreaseTravelers() {
+                if (travelersCount <= minTravelers) {
+                    setHint(minWarning, true);
+                    syncAll();
+                    return;
+                }
+                travelersCount -= 1;
+                syncAll();
+                setHint();
+            }
+
+            plusBtn.addEventListener('click', increaseTravelers);
+            minusBtn.addEventListener('click', decreaseTravelers);
+
+            travelersInput.addEventListener('input', function() {
+                const normalized = normalizeDigits(travelersInput.value);
+                travelersInput.value = normalized ? toPersianDigits(normalized) : '';
+                const typed = parseTypedValue(normalized);
+                if (typed === null) {
+                    return;
+                }
+
+                const clamped = clamp(typed);
+                travelersCount = clamped;
+                syncAll();
+
+                if (typed > maxTravelers) {
+                    setHint(maxWarning, true);
+                } else if (typed < minTravelers) {
+                    setHint(minWarning, true);
+                } else {
+                    setHint();
+                }
+            });
+
+            travelersInput.addEventListener('blur', function() {
+                const typed = parseTypedValue(travelersInput.value);
+                travelersCount = clamp(typed === null ? travelersCount : typed);
+                syncAll();
+                if (travelersCount > minTravelers && travelersCount < maxTravelers) {
+                    setHint();
+                }
+            });
+
+            travelersInput.addEventListener('keydown', function(event) {
+                if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    increaseTravelers();
+                } else if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    decreaseTravelers();
+                } else if (event.key === 'Enter') {
+                    const typed = parseTypedValue(travelersInput.value);
+                    travelersCount = clamp(typed === null ? travelersCount : typed);
+                    syncAll();
+                    if (typed !== null && typed > maxTravelers) {
+                        setHint(maxWarning, true);
+                    } else if (typed !== null && typed < minTravelers) {
+                        setHint(minWarning, true);
+                    } else {
+                        setHint();
+                    }
+                }
+            });
+
+            // init
+            syncAll();
+            setHint();
+        }
+
+        function initBudgetSegmentedControl() {
+            const budgetSelect = document.getElementById('budget_level');
+            const pills = document.querySelectorAll('.budget-pill');
+            if (!budgetSelect || !pills.length) {
+                return;
+            }
+
+            function syncBudgetPills() {
+                pills.forEach(function(pill) {
+                    const isActive = pill.getAttribute('data-value') === budgetSelect.value;
+                    pill.classList.toggle('is-active', isActive);
+                    pill.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                });
+            }
+
+            pills.forEach(function(pill) {
+                pill.addEventListener('click', function() {
+                    budgetSelect.value = pill.getAttribute('data-value');
+                    syncBudgetPills();
+                });
+            });
+
+            syncBudgetPills();
+        }
+
         $(document).ready(function() {
             const datePickerOptions = {
                 observer: true,
@@ -198,7 +584,6 @@
                 },
                 timePicker: { enabled: false },
                 onSelect: function(unix) {
-                    // Get the Jalali date string from the input
                     let jalaliStr = persianToEnglish($(this._targetInput).val());
                     let parts = jalaliStr.split('/');
 
@@ -207,7 +592,6 @@
                         let jm = parseInt(parts[1]);
                         let jd = parseInt(parts[2]);
 
-                        // Convert to Gregorian
                         let greg = jalaliToGregorian(jy, jm, jd);
                         let gDate = greg.year + '-' +
                                     ('0' + greg.month).slice(-2) + '-' +
@@ -224,21 +608,17 @@
                 }
             };
 
-            // اعمال تقویم
             $('#start-date').persianDatepicker(datePickerOptions);
             $('#end-date').persianDatepicker(datePickerOptions);
 
-            // باز کردن تقویم روی فوکوس (خیلی موثر است)
             $('.t10-jalali-input').on('focus', function() {
                 $(this).persianDatepicker('show');
             });
 
-            // کلیک روی آیکون تقویم → فوکوس روی input
             $('.t10-calendar-icon').on('click', function() {
                 $(this).siblings('.t10-jalali-input').focus();
             });
 
-            // محدود کردن minDate برای پایان
             $('#start-date').on('change', function() {
                 let startVal = $(this).val();
                 if (startVal) {
@@ -246,12 +626,13 @@
                 }
             });
 
-            // جلوگیری نرم از تایپ دستی (اختیاری - اگر می‌خواهید کاملاً غیرفعال کنید، preventDefault را برگردانید)
             $('.t10-jalali-input').on('keydown', function(e) {
-                // اگر می‌خواهید تایپ کاملاً ممنوع باشد:
-                // e.preventDefault();
-                // اما برای تجربه بهتر، فعلاً اجازه می‌دهیم (کاربر می‌تواند دستی وارد کند)
+                // allow typing
             });
+
+            initDestinationAutocomplete();
+            initTravelersStepper();
+            initBudgetSegmentedControl();
         });
 
         const form = document.getElementById('create-trip-form');
@@ -275,18 +656,15 @@
 
             data.preferences = formData.getAll('preferences');
 
-            // Convert Jalali dates to Gregorian before sending
             let startGreg = $('#start-date-gregorian').val();
             let endGreg = $('#end-date-gregorian').val();
 
-            // If hidden fields are empty, try to convert manually
             if (!startGreg || !endGreg) {
                 let startJalali = persianToEnglish($('#start-date').val());
                 let endJalali = persianToEnglish($('#end-date').val());
 
                 if (startJalali && endJalali) {
                     try {
-                        // Parse and convert start date
                         let startParts = startJalali.split('/');
                         if (startParts.length === 3) {
                             let startConv = jalaliToGregorian(
@@ -297,7 +675,6 @@
                             startGreg = `${startConv.year}-${('0' + startConv.month).slice(-2)}-${('0' + startConv.day).slice(-2)}`;
                         }
 
-                        // Parse and convert end date
                         let endParts = endJalali.split('/');
                         if (endParts.length === 3) {
                             let endConv = jalaliToGregorian(
@@ -313,7 +690,6 @@
                 }
             }
 
-            // Validate we have Gregorian dates
             if (!startGreg || !endGreg) {
                 resultContent.innerHTML = `<p class="error-message">لطفاً تاریخ‌ها را وارد کنید</p>`;
                 loading.style.display = 'none';
@@ -322,7 +698,6 @@
                 return;
             }
 
-            // Set the final dates with time
             data.start_date = `${startGreg}T00:00:00`;
             data.end_date = `${endGreg}T23:59:59`;
             console.log('Final dates:', { start: data.start_date, end: data.end_date });
@@ -358,7 +733,6 @@
             }
         });
 
-        // Function to view trip details
         async function viewTripDetails(tripId) {
             try {
                 const response = await fetch(`/team10/api/trips/${tripId}/`);
