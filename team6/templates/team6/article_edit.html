@@ -46,7 +46,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">آدرس تصویر شاخص (URL)</label>
-                <input type="url"
+                <input type="text"
                     name="featured_image_url"
                     value="{{ article.featured_image_url }}"
                     class="form-control">
@@ -86,9 +86,13 @@
             </div>
 
             <div class="d-flex gap-2 mt-4 pt-3 border-top">
-                <button type="submit" class="btn btn-success px-4">
-                    <i class="fa-solid fa-floppy-disk"></i> ذخیره تغییرات
+                <button type="submit" name="save_published" class="btn btn-success px-4">
+                    <i class="fa-solid fa-paper-plane"></i> انتشار نهایی
                 </button>
+                
+                <button type="submit" name="save_draft" class="btn btn-secondary px-4" formnovalidate>
+                    <i class="fa-solid fa-floppy-disk"></i> ذخیره در پیش‌نویس
+    </button>
                 <a href="{% url 'team6:article_detail' article.slug %}" class="btn btn-outline-secondary">انصراف</a>
             </div>
         </form>

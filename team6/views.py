@@ -30,7 +30,7 @@ from .models import ArticleFollow, ArticleNotification
 import numpy as np
 from django.db import transaction
 from django.db.models import F
-
+from django.utils.timezone import now
 def sync_internal_links(article):
     """
     این تابع متن مقاله را اسکن کرده و لینک‌های داخلی را استخراج و در دیتابیس ذخیره می‌کند.
@@ -87,7 +87,7 @@ class ArticleListView(ListView):
     def get_queryset(self):
         # queryset = WikiArticle.objects.filter(status='published')
         # q = self.request.GET.get('q')
-        cat = self.request.GET.get('category')
+        
         # search_type = self.request.GET.get('search_type', 'direct')
 
         # if q:  # جستجوی مستقیم یا معنایی
@@ -106,8 +106,10 @@ class ArticleListView(ListView):
 
         q = self.request.GET.get('q')
         search_type = self.request.GET.get('search_type', 'direct')
+        
+        cat = self.request.GET.getlist('category')
         if cat:
-            queryset = queryset.filter(category__slug=cat)
+            queryset = queryset.filter(category__slug__in=cat)
         # ---------- سرچ معنایی ----------
         if q and search_type == 'semantic':
             articles = list(queryset)
@@ -176,12 +178,15 @@ class ArticleListView(ListView):
 
         # return queryset
             
-        sort_by = self.request.GET.get('sort', 'alphabetical')
-        if sort_by == 'views':
+        sort = self.request.GET.get('sort', 'alphabetical')
+        if sort == 'newest':
+            queryset = queryset.order_by('-published_at')
+        # elif sort == 'followers':
+        #     queryset = queryset.order_by('-follower_count')
+        elif sort == 'views':
             queryset = queryset.order_by('-view_count')
         else:
-            queryset = queryset.order_by('title_fa') # سورت الفبایی پیش‌فرض
-            
+            queryset = queryset.order_by('title_fa')
         return queryset.distinct()
 
     def get_context_data(self, **kwargs):
@@ -206,7 +211,12 @@ class ArticleCreateView(CreateView):
 
         article.author_user_id = self.request.user.id
         article.last_editor_user_id = self.request.user.id
-        article.status = 'published'
+        # article.status = 'published'
+        if 'save_draft' in self.request.POST:
+            article.status = 'draft'
+        else:
+            article.status = 'published'
+            article.published_at = now()
 
         # دسته‌بندی
         category_id = self.request.POST.get('category')
@@ -220,11 +230,18 @@ class ArticleCreateView(CreateView):
             messages.error(self.request, "لطفاً یک دسته‌بندی انتخاب کنید.")
             return self.form_invalid(form)
 
-        # slug مقاله
-        title_slug = slugify(article.place_name, allow_unicode=False)
-        article.slug = title_slug if title_slug and not WikiArticle.objects.filter(slug=title_slug).exists() else str(uuid.uuid4())[:12]
+        # --- اصلاح بخش اسلاگ ---
+        # اولویت با نام مکان، اگر نبود عنوان فارسی
+        slug_source = article.place_name if article.place_name else article.title_fa
+        title_slug = slugify(slug_source, allow_unicode=True) # allow_unicode=True برای فارسی
+        
+        if not title_slug or WikiArticle.objects.filter(slug=title_slug).exists():
+            # اگر اسلاگ تکراری بود یا ساخته نشد، یک کد رندوم اضافه کن
+            article.slug = f"{title_slug}-{str(uuid.uuid4())[:8]}" if title_slug else str(uuid.uuid4())[:12]
+        else:
+            article.slug = title_slug
+            
         article.url = f"/team6/article/{article.slug}/"
-
         # ترجمه انگلیسی
         try:
             article.title_en = GoogleTranslator(source='fa', target='en').translate(article.title_fa)
@@ -308,74 +325,83 @@ def edit_article(request, slug):
         return render(request, 'team6/not_allowed.html', {
             'message': '✋ فقط نویسنده‌ی مقاله می‌تواند مقاله را ویرایشش کند'
         })
-    
-    if request.method == "POST":
-        # ذخیره نسخه قبلی در تاریخچه
-        current_rev = WikiArticleRevision.objects.filter(article=article).count() + 1
-        WikiArticleRevision.objects.create(
-            article=article,
-            revision_no=current_rev,
-            body_fa=request.POST.get('body_fa', article.body_fa),
-            editor_user_id=request.user.id,
-            change_note=request.POST.get('change_note', 'ویرایش بدون توضیح')
-        )
+    try:
+        if request.method == "POST":
+            # ۱. دریافت مقادیر جدید از فرم
+            new_body = request.POST.get('body_fa', article.body_fa)
+            new_title = request.POST.get('title_fa', article.title_fa)
+            new_summary = request.POST.get('summary', article.summary)
+            change_note = request.POST.get('change_note', 'ویرایش محتوا')
 
-        # آپدیت مقادیر اصلی
-        article.title_fa = request.POST.get('title_fa', article.title_fa)
-        article.body_fa = request.POST.get('body_fa', article.body_fa)
-        article.summary = request.POST.get('summary', article.summary)
-        
-        # آپدیت دسته‌بندی
-        category_id = request.POST.get('category')
-        if category_id:
-            try:
+            # ۲. محاسبه شماره نسخه جدید (تعداد فعلی + ۱)
+            new_rev_no = WikiArticleRevision.objects.filter(article=article).count() + 1
+            
+            # ۳. ایجاد رکورد جدید در تاریخچه (ذخیره نسخه جدید)
+            WikiArticleRevision.objects.create(
+                article=article,
+                revision_no=new_rev_no,
+                body_fa=new_body,
+                editor_user_id=request.user.id,
+                change_note=change_note
+            )
+
+            # ۴. آپدیت مقاله اصلی
+            is_published = 'save_published' in request.POST
+            if is_published:
+                article.status = 'published'
+                if not article.published_at:
+                    article.published_at = now()
+                success_msg = "✅ مقاله با موفقیت منتشر و نسخه جدید ذخیره شد."
+            else:
+                article.status = 'draft'
+                success_msg = "💾 تغییرات در پیش‌نویس ذخیره شد (نسخه جدید ثبت شد)."
+
+            article.title_fa = new_title
+            article.body_fa = new_body
+            article.summary = new_summary
+            article.current_revision_no = new_rev_no
+            article.last_editor_user_id = request.user.id
+            
+            # عکس و دسته‌بندی
+            article.featured_image_url = request.POST.get('featured_image_url', article.featured_image_url)
+            category_id = request.POST.get('category')
+            if category_id:
                 article.category = WikiCategory.objects.get(id_category=category_id)
-            except WikiCategory.DoesNotExist:
-                pass
 
-        #عکس
-        article.featured_image_url = request.POST.get(
-            'featured_image_url',
-            article.featured_image_url
-        )
+            # ۵. تگ‌ها
+            tags_input = request.POST.get('tags', None)
+            if tags_input is not None:
+                tag_names = [t.strip() for t in tags_input.split(",") if t.strip()]
+                article.tags.set([])
+                for name in tag_names:
+                    tag, _ = WikiTag.objects.get_or_create(
+                        title_fa=name,
+                        defaults={'slug': slugify(name, allow_unicode=True), 'title_en': name}
+                    )
+                    article.tags.add(tag)
 
-        
-        # **تگ‌ها: ساده و بدون سیگنال اضافی**
-        tags_input = request.POST.get('tags', None)
+            article.save()
+            sync_internal_links(article)
 
-        if tags_input is not None:
-            tag_names = [t.strip() for t in tags_input.split(",") if t.strip()]
-            
-            # فقط اگر کاربر واقعاً چیزی نوشته، جایگزین کن
-            article.tags.set([])  # ریست ایمن
-            
-            for tag_name in tag_names:
-                tag, _ = WikiTag.objects.get_or_create(
-                    title_fa=tag_name,
-                    defaults={
-                        'slug': slugify(tag_name, allow_unicode=True)[:50],
-                        'title_en': tag_name
-                    }
-                )
-                article.tags.add(tag)
-        
-        article.current_revision_no = current_rev + 1
-        article.last_editor_user_id = request.user.id
-        article.save()  # این باعث اجرای سیگنال می‌شود
-        
-        sync_internal_links(article)
-
-        messages.success(request, "✅ مقاله با موفقیت ویرایش شد")
-        return redirect('team6:article_detail', slug=article.slug)
-
+            messages.success(request, "✅ مقاله با موفقیت ویرایش شد")
+            if article.status == 'published':
+                return redirect('team6:article_detail', slug=article.slug)
+            else:
+                return redirect('team6:draft_list')
+    except Exception as e:
+            # اگر خطایی رخ داد، چاپ کن تا در ترمینال ببینی
+            print(f"❌ Error in edit_article: {e}")
+            messages.error(request, f"خطایی رخ داد: {e}")
+            # بازگشت به همان صفحه ویرایش به جای ارور ۵۰۰
+            return redirect('team6:edit_article', slug=article.slug)
     # برای GET
-    current_rev = WikiArticleRevision.objects.filter(article=article).count() + 1
+    current_rev_display = WikiArticleRevision.objects.filter(article=article).count() + 1
     categories = WikiCategory.objects.all()
     all_articles = WikiArticle.objects.filter(status='published')
     
     return render(request, 'team6/article_edit.html', {
         'article': article,
-        'current_rev': current_rev,
+        'current_rev': current_rev_display,
         'categories': categories,
         'all_articles': all_articles,
     })
@@ -418,16 +444,19 @@ def report_article(request, slug):
 
 # نمایش نسخه‌ها
 def article_revisions(request, slug):
-    article = get_object_or_404(WikiArticle, slug=slug)
-    revisions = WikiArticleRevision.objects.filter(
-    article=article
-        ).exclude(
-            revision_no__isnull=True
-        ).order_by('-created_at')
-    return render(request, 'team6/article_revisions.html', {
-        'article': article, 
-        'revisions': revisions
-    })
+    try:
+        article = get_object_or_404(WikiArticle, slug=slug)
+        revisions = WikiArticleRevision.objects.filter(article=article).order_by('-revision_no')
+        return render(request, 'team6/article_revisions.html', {
+            'article': article, 
+            'revisions': revisions
+        })
+    except Exception as e:
+        import traceback
+        print("--- ERROR START ---")
+        print(traceback.format_exc()) # این تمام جزئیات خطا را چاپ می‌کند
+        print("--- ERROR END ---")
+        raise e
 # نمایش جزئیات مقاله
 def article_detail(request, slug):
     try:
@@ -755,3 +784,44 @@ def archive_all_notifications(request):
         messages.error(request, f"خطا در آرشیو کردن اعلان‌ها: {e}")
     
     return redirect('team6:notifications_list')
+
+@login_required
+def rollback_revision(request, slug, revision_no):
+    article = get_object_or_404(WikiArticle, slug=slug)
+    # پیدا کردن نسخه‌ای که قرار است به آن برگردیم
+    target_revision = get_object_or_404(WikiArticleRevision, article=article, revision_no=revision_no)
+    
+    if request.method == "POST":
+        # ۱. محاسبه شماره نسخه جدید برای عملیات بازگردانی
+        new_rev_num = WikiArticleRevision.objects.filter(article=article).count() + 1
+        
+        # ۲. آپدیت مقاله اصلی
+        article.body_fa = target_revision.body_fa
+        article.current_revision_no = new_rev_num
+        article.last_editor_user_id = request.user.id
+        article.save()
+        
+        # ۳. ثبت این "بازگردانی" به عنوان یک نسخه جدید در تاریخچه
+        WikiArticleRevision.objects.create(
+            article=article,
+            revision_no=new_rev_num,
+            body_fa=target_revision.body_fa,
+            editor_user_id=request.user.id,
+            change_note=f"⏪ بازگردانی به نسخه شماره {revision_no}"
+        )
+        
+        messages.success(request, f"✅ مقاله با موفقیت به نسخه {revision_no} بازگردانی شد.")
+        return redirect('team6:article_detail', slug=article.slug)
+    
+    # اگر متد GET بود، به صفحه تایید برود (اگر فایلی به نام rollback_confirm داری)
+    return render(request, 'team6/rollback_confirm.html', {'article': article, 'revision': target_revision})
+
+@login_required
+def draft_list(request):
+    # فقط مقالاتی که وضعیت پیش‌نویس دارند و نویسنده‌شان کاربر فعلی است
+    drafts = WikiArticle.objects.filter(
+        status='draft', 
+        author_user_id=request.user.id
+    ).order_by('-updated_at')
+    
+    return render(request, 'team6/draft_list.html', {'drafts': drafts})

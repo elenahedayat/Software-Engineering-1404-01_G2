@@ -99,7 +99,9 @@
                 <textarea name="summary" id="summary" class="form-control" rows="2"></textarea>
             </div>
 
-            <button type="submit" class="btn btn-success px-5">ذخیره مقاله</button>
+            {% comment %} <button type="submit" class="btn btn-success px-5">ذخیره مقاله</button> {% endcomment %}
+            <button type="submit" name="save_published" class="btn btn-success">انتشار مقاله</button>
+            <button type="submit" name="save_draft" class="btn btn-secondary">ذخیره به عنوان پیش‌نویس</button>
         </form>
     </div>
 </div>
