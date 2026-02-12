@@ -17,12 +17,19 @@ class VersionSerializer(serializers.ModelSerializer):
         read_only_fields = ['editor_id', 'summary', 'tags']
 
 
+class VersionListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Version
+        fields = ['name', 'summary', 'editor_id']
+
+
 class ArticleSerializer(serializers.ModelSerializer):
     current_version = VersionSerializer(read_only=True)
+    versions = VersionListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Article
-        fields = ['name', 'creator_id', 'current_version', 'score']
+        fields = ['name', 'creator_id', 'current_version', 'score', 'versions']
         read_only_fields = ['creator_id', 'score']
 
 
@@ -33,6 +40,11 @@ class CreateArticleSerializer(serializers.Serializer):
 class CreateVersionFromVersionSerializer(serializers.Serializer):
     source_version_name = serializers.CharField(max_length=255)
     new_version_name = serializers.CharField(max_length=255)
+
+
+class CreateEmptyVersionSerializer(serializers.Serializer):
+    article_name = serializers.CharField(max_length=255)
+    version_name = serializers.CharField(max_length=255)
 
 
 class VoteSerializer(serializers.Serializer):

@@ -1,5 +1,6 @@
+from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -10,7 +11,7 @@ from .authentication import JWTMiddlewareAuthentication
 from .models import Article, Version, Vote
 from .serializers import (
     ArticleSerializer, VersionSerializer, CreateArticleSerializer,
-    CreateVersionFromVersionSerializer, VoteSerializer,
+    CreateVersionFromVersionSerializer, CreateEmptyVersionSerializer, VoteSerializer,
 )
 from .tasks.tasks import summarize_article, tag_article
 from .tasks.indexing import index_article_version, search_articles_semantic
@@ -27,7 +28,7 @@ def ping(request):
 
 
 def base(request):
-    return render(request, f"{TEAM_NAME}/index.html")
+    return redirect(settings.TEAM2_FRONT_URL)
 
 
 @api_view(['POST'])
@@ -108,10 +109,6 @@ def create_version_from_version(request):
     )
     new_version.tags.set(source_version.tags.all())
 
-    article = source_version.article
-    article.current_version = new_version
-    article.save()
-
     return Response(VersionSerializer(new_version).data, status=status.HTTP_201_CREATED)
 
 
@@ -150,6 +147,17 @@ def vote(request):
     return Response({"article": article.name, "score": article.score, "your_vote": value})
 
 
+@api_view(['PATCH'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes(PERM_CLASSES)
+def update_version(request, version_name):
+    version = get_object_or_404(Version, name=version_name)
+    serializer = VersionSerializer(version, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    return Response(VersionSerializer(version).data)
+
+
 @api_view(['POST'])
 @authentication_classes(AUTH_CLASSES)
 @permission_classes(PERM_CLASSES)
@@ -166,6 +174,43 @@ def publish_version(request, version_name):
     index_article_version(version)
 
     return Response(ArticleSerializer(article).data)
+
+
+@api_view(['GET'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes(PERM_CLASSES)
+def my_articles(request):
+    articles = Article.objects.filter(creator_id=request.user.id)
+    return Response(ArticleSerializer(articles, many=True).data)
+
+
+@api_view(['POST'])
+@authentication_classes(AUTH_CLASSES)
+@permission_classes(PERM_CLASSES)
+def create_empty_version(request):
+    serializer = CreateEmptyVersionSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    article_name = serializer.validated_data['article_name']
+    version_name = serializer.validated_data['version_name']
+
+    article = get_object_or_404(Article, name=article_name)
+
+    if Version.objects.filter(name=version_name).exists():
+        return Response(
+            {"detail": "Version with this name already exists."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    new_version = Version.objects.create(
+        name=version_name,
+        article=article,
+        content='',
+        summary='',
+        editor_id=request.user.id,
+    )
+
+    return Response(VersionSerializer(new_version).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
