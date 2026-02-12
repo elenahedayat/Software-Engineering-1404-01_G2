@@ -16,17 +16,17 @@ from data.models import (
 
 class TripService:
     """Business logic for Trip operations"""
-    
+
     @staticmethod
     def get_all_trips(user_id: Optional[int] = None, status: Optional[str] = None) -> List[Trip]:
         """Get all trips with optional filters"""
         return list(TripRepository.get_all(user_id, status))
-    
+
     @staticmethod
     def get_trip_detail(trip_id: int) -> Optional[Trip]:
         """Get detailed trip information"""
         return TripRepository.get_by_id(trip_id)
-    
+
     @staticmethod
     def create_trip(user_id: Optional[int], data: Dict[str, Any]) -> Trip:
         """Create a new trip with validation"""
@@ -38,34 +38,34 @@ class TripService:
             raise ValueError("Start date is required")
         if not data.get('duration_days') or data['duration_days'] < 1:
             raise ValueError("Duration must be at least 1 day")
-        
+
         trip_data = {**data}
         if user_id:
             trip_data['user_id'] = user_id
-            
+
         return TripRepository.create(trip_data)
-    
+
     @staticmethod
     def update_trip(trip_id: int, data: Dict[str, Any]) -> Optional[Trip]:
         """Update trip information"""
         trip = TripRepository.get_by_id(trip_id)
         if not trip:
             return None
-            
+
         return TripRepository.update(trip_id, data)
-    
+
     @staticmethod
     def delete_trip(trip_id: int) -> bool:
         """Delete a trip"""
         return TripRepository.delete(trip_id)
-    
+
     @staticmethod
     def copy_trip(trip_id: int, user_id: Optional[int] = None) -> Optional[Trip]:
         """Create a copy of an existing trip"""
         original = TripRepository.get_by_id(trip_id)
         if not original:
             return None
-        
+
         new_trip_data = {
             'user_id': user_id,
             'copied_from_trip_id': trip_id,
@@ -79,44 +79,113 @@ class TripService:
             'travel_style': original.travel_style,
             'generation_strategy': original.generation_strategy,
         }
-        
+
         return TripRepository.create(new_trip_data)
-    
+
     @staticmethod
     def finalize_trip(trip_id: int) -> Optional[Trip]:
         """Finalize a trip (change status from DRAFT to FINALIZED)"""
         return TripRepository.update(trip_id, {'status': 'FINALIZED'})
-    
+
     @staticmethod
     def search_trips(query: str) -> List[Trip]:
         """Search trips by title, province, or city"""
         return list(TripRepository.search(query))
+    
+    @staticmethod
+    def calculate_trip_cost_breakdown(trip_id: int) -> Optional[Dict[str, Any]]:
+        """
+        محاسبه هزینه کل و breakdown به تفکیک کتگوری
+        
+        Returns:
+        {
+            "total_estimated_cost": Decimal,
+            "breakdown_by_category": {
+                "DINING": {"amount": Decimal, "percentage": float, "count": int},
+                "STAY": {"amount": Decimal, "percentage": float, "count": int},
+                ...
+            },
+            "breakdown_by_day": [
+                {"day_index": 1, "date": "2026-05-01", "cost": Decimal},
+                ...
+            ]
+        }
+        """
+        from django.db.models import Sum, Count
+        
+        trip = TripRepository.get_by_id(trip_id)
+        if not trip:
+            return None
+        
+        # جمع هزینه تمام آیتم‌ها
+        items = TripItem.objects.filter(day__trip=trip)
+        total = items.aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or Decimal('0.00')
+        
+        # Breakdown by category
+        breakdown_query = items.values('category').annotate(
+            amount=Sum('estimated_cost'),
+            count=Count('item_id')
+        )
+        
+        breakdown_by_category = {}
+        for item in breakdown_query:
+            category = item['category'] or 'OTHER'
+            amount = item['amount'] or Decimal('0.00')
+            percentage = float((amount / total * 100) if total > 0 else 0)
+            
+            breakdown_by_category[category] = {
+                "amount": float(amount),
+                "percentage": round(percentage, 2),
+                "count": item['count']
+            }
+        
+        # Breakdown by day
+        day_breakdown_query = TripDay.objects.filter(trip=trip).prefetch_related('items')
+        breakdown_by_day = []
+        
+        for day in day_breakdown_query:
+            day_cost = day.items.aggregate(Sum('estimated_cost'))['estimated_cost__sum'] or Decimal('0.00')
+            breakdown_by_day.append({
+                "day_index": day.day_index,
+                "date": day.specific_date.isoformat(),
+                "cost": float(day_cost)
+            })
+        
+        # Update Trip model total
+        trip.total_estimated_cost = total
+        trip.save(update_fields=['total_estimated_cost'])
+        
+        return {
+            "total_estimated_cost": float(total),
+            "breakdown_by_category": breakdown_by_category,
+            "breakdown_by_day": breakdown_by_day
+        }
 
 
 class TripDayService:
     """Business logic for TripDay operations"""
-    
+
     @staticmethod
     def get_days_for_trip(trip_id: int) -> List[TripDay]:
         """Get all days for a trip"""
         return list(TripDayRepository.get_by_trip(trip_id))
-    
+
     @staticmethod
     def create_day(trip_id: int, data: Dict[str, Any]) -> TripDay:
         """Create a new day for a trip"""
         day_data = {**data, 'trip_id': trip_id}
         return TripDayRepository.create(day_data)
-    
+
     @staticmethod
     def update_day(day_id: int, data: Dict[str, Any]) -> Optional[TripDay]:
         """Update a trip day"""
         return TripDayRepository.update(day_id, data)
-    
+
     @staticmethod
     def delete_day(day_id: int) -> bool:
         """Delete a trip day"""
         return TripDayRepository.delete(day_id)
-    
+
     @staticmethod
     def generate_days_for_trip(trip: Trip) -> List[TripDay]:
         """Auto-generate days based on trip duration"""
@@ -127,23 +196,23 @@ class TripDayService:
                 'day_index': i + 1,
                 'specific_date': day_date,
             })
-        
+
         return TripDayRepository.bulk_create_for_trip(trip, days_data)
 
 
 class TripItemService:
     """Business logic for TripItem operations"""
-    
+
     @staticmethod
     def get_items_for_day(day_id: int) -> List[TripItem]:
         """Get all items for a specific day"""
         return list(TripItemRepository.get_by_day(day_id))
-    
+
     @staticmethod
     def get_item_by_id(item_id: int) -> Optional[TripItem]:
         """Get a specific item by ID"""
         return TripItemRepository.get_by_id(item_id)
-    
+
     @staticmethod
     def create_item(day_id: int, data: Dict[str, Any]) -> TripItem:
         """Create a new item for a day"""
@@ -151,37 +220,50 @@ class TripItemService:
             raise ValueError("Place reference ID is required")
         if not data.get('title'):
             raise ValueError("Item title is required")
-            
+
         item_data = {**data, 'day_id': day_id}
         return TripItemRepository.create(item_data)
-    
+
     @staticmethod
     def update_item(item_id: int, data: Dict[str, Any]) -> Optional[TripItem]:
-        """Update a trip item"""
+        """Update a trip item with time validation"""
+        from .helpers import validate_time_reschedule
+        
         item = TripItemRepository.get_by_id(item_id)
         if not item:
             return None
+
+        # If updating time, validate the change
+        new_start_time = data.get('start_time')
+        new_end_time = data.get('end_time')
+        
+        if new_start_time or new_end_time:
+            validation_result = validate_time_reschedule(
+                item=item,
+                new_start_time=new_start_time,
+                new_end_time=new_end_time
+            )
             
-        if item.is_locked and 'start_time' in data:
-            raise ValueError("Cannot modify time of locked item")
-            
+            if not validation_result['valid']:
+                raise ValueError(validation_result['error'])
+
         return TripItemRepository.update(item_id, data)
-    
+
     @staticmethod
     def delete_item(item_id: int) -> bool:
         """Delete a trip item"""
         return TripItemRepository.delete(item_id)
-    
+
     @staticmethod
     def lock_item(item_id: int) -> Optional[TripItem]:
         """Lock an item to prevent time changes"""
         return TripItemRepository.update(item_id, {'is_locked': True})
-    
+
     @staticmethod
     def unlock_item(item_id: int) -> Optional[TripItem]:
         """Unlock an item"""
         return TripItemRepository.update(item_id, {'is_locked': False})
-    
+
     @staticmethod
     def reorder_items(day_id: int, item_order: List[int]) -> bool:
         """Reorder items in a day"""
@@ -190,25 +272,26 @@ class TripItemService:
 
 class DependencyService:
     """Business logic for ItemDependency operations"""
-    
+
     @staticmethod
-    def add_dependency(item_id: int, prerequisite_id: int, 
-                      dependency_type: str = 'FINISH_TO_START') -> ItemDependency:
+    def add_dependency(item_id: int, prerequisite_id: int,
+                       dependency_type: str = 'FINISH_TO_START') -> ItemDependency:
         """Add a dependency between items"""
         if ItemDependencyRepository.check_circular_dependency(item_id, prerequisite_id):
-            raise ValueError("Cannot add dependency: would create a circular dependency")
-        
+            raise ValueError(
+                "Cannot add dependency: would create a circular dependency")
+
         return ItemDependencyRepository.create({
             'item_id': item_id,
             'prerequisite_item_id': prerequisite_id,
             'dependency_type': dependency_type
         })
-    
+
     @staticmethod
     def remove_dependency(dependency_id: int) -> bool:
         """Remove a dependency"""
         return ItemDependencyRepository.delete(dependency_id)
-    
+
     @staticmethod
     def get_item_dependencies(item_id: int) -> List:
         """Get all dependencies for an item"""
@@ -217,32 +300,32 @@ class DependencyService:
 
 class ShareService:
     """Business logic for ShareLink operations"""
-    
+
     @staticmethod
-    def create_share_link(trip_id: int, permission: str = 'VIEW', 
-                         expires_in_hours: int = 168) -> ShareLink:
+    def create_share_link(trip_id: int, permission: str = 'VIEW',
+                          expires_in_hours: int = 168) -> ShareLink:
         """Create a shareable link for a trip"""
         token = secrets.token_urlsafe(32)
         expires_at = datetime.now() + timedelta(hours=expires_in_hours)
-        
+
         return ShareLinkRepository.create({
             'trip_id': trip_id,
             'token': token,
             'expires_at': expires_at,
             'permission': permission
         })
-    
+
     @staticmethod
     def get_trip_by_token(token: str) -> Optional[Trip]:
         """Get trip using share token"""
         share_link = ShareLinkRepository.get_by_token(token)
         return share_link.trip if share_link else None
-    
+
     @staticmethod
     def revoke_link(link_id: int) -> bool:
         """Revoke a share link"""
         return ShareLinkRepository.delete(link_id)
-    
+
     @staticmethod
     def cleanup_expired_links(trip_id: Optional[int] = None) -> int:
         """Remove expired share links"""
@@ -251,7 +334,7 @@ class ShareService:
 
 class VotingService:
     """Business logic for Vote operations"""
-    
+
     @staticmethod
     def cast_vote(item_id: int, session_id: str, is_upvote: bool) -> Vote:
         """Cast or update a vote on an item"""
@@ -260,12 +343,12 @@ class VotingService:
             'guest_session_id': session_id,
             'is_upvote': is_upvote
         })
-    
+
     @staticmethod
     def get_vote_summary(item_id: int) -> Dict[str, int]:
         """Get vote statistics for an item"""
         return VoteRepository.get_vote_count(item_id)
-    
+
     @staticmethod
     def remove_vote(vote_id: int) -> bool:
         """Remove a vote"""
@@ -274,36 +357,36 @@ class VotingService:
 
 class ReviewService:
     """Business logic for TripReview operations"""
-    
+
     @staticmethod
     def create_review(trip_id: int, rating: int, comment: str = "",
-                     item_id: Optional[int] = None) -> TripReview:
+                      item_id: Optional[int] = None) -> TripReview:
         """Create a review for a trip or specific item"""
         if not 1 <= rating <= 5:
             raise ValueError("Rating must be between 1 and 5")
-        
+
         return TripReviewRepository.create({
             'trip_id': trip_id,
             'item_id': item_id,
             'rating': rating,
             'comment': comment
         })
-    
+
     @staticmethod
     def get_trip_reviews(trip_id: int) -> List[TripReview]:
         """Get all reviews for a trip"""
         return list(TripReviewRepository.get_by_trip(trip_id))
-    
+
     @staticmethod
     def get_average_rating(trip_id: int) -> Optional[float]:
         """Get average rating for a trip"""
         return TripReviewRepository.get_average_rating(trip_id)
-    
+
     @staticmethod
     def update_review(review_id: int, data: Dict[str, Any]) -> Optional[TripReview]:
         """Update a review"""
         return TripReviewRepository.update(review_id, data)
-    
+
     @staticmethod
     def delete_review(review_id: int) -> bool:
         """Delete a review"""
@@ -312,10 +395,10 @@ class ReviewService:
 
 class MediaService:
     """Business logic for UserMedia operations"""
-    
+
     @staticmethod
     def upload_media(trip_id: int, user_id: int, media_url: str,
-                    caption: str = "", media_type: str = 'PHOTO') -> UserMedia:
+                     caption: str = "", media_type: str = 'PHOTO') -> UserMedia:
         """Upload media for a trip"""
         return UserMediaRepository.create({
             'trip_id': trip_id,
@@ -324,17 +407,17 @@ class MediaService:
             'caption': caption,
             'media_type': media_type
         })
-    
+
     @staticmethod
     def get_trip_media(trip_id: int) -> List[UserMedia]:
         """Get all media for a trip"""
         return list(UserMediaRepository.get_by_trip(trip_id))
-    
+
     @staticmethod
     def get_user_media(user_id: int, trip_id: Optional[int] = None) -> List[UserMedia]:
         """Get all media uploaded by a user"""
         return list(UserMediaRepository.get_by_user(user_id, trip_id))
-    
+
     @staticmethod
     def delete_media(media_id: int) -> bool:
         """Delete media"""
