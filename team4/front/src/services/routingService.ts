@@ -63,7 +63,7 @@ export const routingService = {
       ]);
 
       const results: SearchResult[] = [];
-
+/*
       // Add region results
       if (regionsResponse.regions) {
         for (const region of regionsResponse.regions) {
@@ -77,7 +77,7 @@ export const routingService = {
           });
         }
       }
-
+*/
       // Add facility results
       if (facilitiesResponse.results) {
         const facilities = facilitiesResponse.results;

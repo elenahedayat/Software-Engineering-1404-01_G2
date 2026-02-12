@@ -5,6 +5,14 @@
  * For now, this is a placeholder that returns mock token
  */
 
+/**
+ * Get CSRF token from cookies
+ */
+function getCSRFToken(): string {
+  const match = document.cookie.match(/csrftoken=([^;]+)/);
+  return match ? match[1] : '';
+}
+
 export const authHelper = {
   /**
    * Get authentication token from storage
@@ -40,16 +48,29 @@ export const authHelper = {
   },
 
   /**
-   * Get headers with authentication token
+   * Get CSRF token from cookie
+   */
+  getCSRFToken(): string {
+    return getCSRFToken();
+  },
+
+  /**
+   * Get headers with authentication token and CSRF token
    */
   getAuthHeaders(): HeadersInit {
     const token = this.getToken();
+    const csrfToken = getCSRFToken();
+    
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    if (csrfToken) {
+      headers['X-CSRFToken'] = csrfToken;
     }
 
     return headers;

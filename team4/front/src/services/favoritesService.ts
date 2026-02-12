@@ -13,6 +13,19 @@ export interface FavoriteCheckResponse {
   facility_id: string;
 }
 
+export interface FavoritePlace {
+  id: string;
+  place_id: string;
+  place_name: string;
+  place_address: string;
+  place_category: string;
+  place_rating: number;
+  place_image?: string;
+  latitude: number;
+  longitude: number;
+}
+
+
 export const favoritesService = {
   /**
    * Toggle favorite status for a facility
@@ -53,7 +66,7 @@ export const favoritesService = {
   /**
    * Get all user favorites
    */
-  async getFavorites(): Promise<any[]> {
+  async getFavorites(): Promise<FavoritePlace[]> {
     const response = await fetch(FAVORITES_URL, {
       method: 'GET',
       headers: authHelper.getAuthHeaders()

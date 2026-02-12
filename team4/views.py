@@ -916,6 +916,13 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         if not facility_id:
             return Response({"detail": "Facility ID required"}, status=400)
 
+        # For development: handle anonymous users
+        if not request.user or not request.user.is_authenticated:
+            return Response({
+                "detail": "Authentication required. Please login first.",
+                "status": "error"
+            }, status=401)
+
         # Get the facility object (lives in the same DB as Favorite)
         facility = get_object_or_404(Facility, pk=facility_id)
 
