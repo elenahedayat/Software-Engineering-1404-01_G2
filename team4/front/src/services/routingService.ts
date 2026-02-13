@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api';
+import { authHelper } from '../utils/authHelper';
 import { RouteResponse } from '../data/types';
 
 const NAVIGATION_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.TEAM_PREFIX}/api/navigation/route/`;
@@ -27,15 +28,16 @@ export const routingService = {
     try {
       const [regionsResponse, facilitiesResponse] = await Promise.all([
         // Search regions (cities, provinces, villages)
-        fetch(`${REGIONS_URL}?query=${encodeURIComponent(query)}`).then(res => 
+        fetch(`${REGIONS_URL}?query=${encodeURIComponent(query)}`, {
+          credentials: 'include'
+        }).then(res => 
           res.ok ? res.json() : { regions: [] }
         ),
         // Search facilities by name
         fetch(`${FACILITIES_URL}/search/`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: authHelper.getAuthHeaders(),
+          credentials: 'include',
           body: JSON.stringify({
             name: query
           })
@@ -105,9 +107,8 @@ export const routingService = {
   ): Promise<RouteResponse> {
     const response = await fetch(NAVIGATION_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: authHelper.getAuthHeaders(),
+      credentials: 'include',
       body: JSON.stringify({
         type,
         origin: `${origin.lat},${origin.lng}`,
