@@ -80,7 +80,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <DialogOverlay />
             <DialogContent className="max-w-md bg-white w-full mx-4 max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <div className="flex items-start">
+                    <div className="flex items-start flex-row-reverse text-start p-4">
                         <div className={`flex-shrink-0 ${currentVariant.iconBg} rounded-full pt-1 px-1.5 ms-4`}>
                             <i className={`fas ${currentVariant.icon} ${currentVariant.iconColor} text-xl`}></i>
                         </div>

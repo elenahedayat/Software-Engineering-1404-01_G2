@@ -23,7 +23,7 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
     return (
         <div
             className="relative"
-            style={{ width: `${cardWidth}px` }}
+            style={{ width: `${cardWidth}px`, transition: 'width 0.2s ease' }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
@@ -35,7 +35,7 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
                 <div className="w-full px-3 py-2 flex items-center justify-between">
                     <button
                         onClick={() => onDelete(item.id)}
-                        className="text-red-400 hover:text-red-500 hover:cursor-pointer transition-colors text-sm flex items-center"
+                        className="text-red-400 hover:text-red-700 hover:cursor-pointer transition-colors text-sm flex items-center"
                         title="حذف"
                     >
                         <i className="fa-solid fa-trash ml-1"></i>
@@ -44,7 +44,7 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
 
                     <button
                         onClick={() => onSuggestAlternative(item.id)}
-                        className="text-persian-gold hover:cursor-pointer transition-colors text-sm flex items-center"
+                        className="text-white hover:text-persian-gold hover:cursor-pointer transition-colors text-sm flex items-center"
                         title="پیشنهاد آیتم جایگزین"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles ml-1"></i>
@@ -54,7 +54,12 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
             </div>
 
             {/* Card Content */}
-            <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden h-[260px]">
+            <div className="bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden h-[260px] relative">
+                {/* Gradient Side Accent - Right */}
+                <div className="absolute right-0 top-0 bottom-0 w-1 bg-gradient-to-b from-forest-green to-tile-cyan opacity-80 transition-opacity" />
+                {/* Gradient Side Accent - Top */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white to-forest-green opacity-80 transition-opacity" />
+
                 <div className="p-4 h-full flex flex-col">
                     {/* Type Badge */}
                     <div className="flex items-center justify-between mb-2">

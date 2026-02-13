@@ -44,7 +44,7 @@ export const destinationApi = {
 export const tripApi = {
     // 1. Create New Trip
     create: (data: CreateTripPayload): Promise<AxiosResponse<Trip>> => 
-        api.post('/trips/', data),
+        api.post('/trips/generate/', data),
 
     // 2. Get Trip Timeline (Full Details)
     getById: (tripId: number): Promise<AxiosResponse<Trip>> => 
@@ -74,19 +74,45 @@ export const tripApi = {
     exportPDF: (tripId: number): Promise<AxiosResponse<Blob>> => 
         api.get(`/trips/${tripId}/export_pdf/`, {
             responseType: 'blob',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest', // Prevent IDM interception
+            },
         }),
 
     // Helper function to download PDF
     downloadPDF: async (tripId: number, filename?: string): Promise<void> => {
-        const response = await tripApi.exportPDF(tripId);
-        const url = window.URL.createObjectURL(response.data);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename || `trip_${tripId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        try {
+            const response = await tripApi.exportPDF(tripId);
+            
+            // Validate blob response
+            if (!response.data || response.data.size === 0) {
+                throw new Error('Received empty PDF file');
+            }
+
+            // Create blob URL and trigger download
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || `trip_${tripId}.pdf`;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            
+            // Small delay to ensure link is ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            link.click();
+            
+            // Cleanup after a delay to ensure download starts
+            setTimeout(() => {
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+        } catch (error) {
+            console.error('PDF download error:', error);
+            // throw error;
+        }
     },
 
     // Legacy aliases for backward compatibility
