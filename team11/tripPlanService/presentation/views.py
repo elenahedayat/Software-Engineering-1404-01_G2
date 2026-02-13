@@ -669,14 +669,6 @@ class TripDayViewSet(viewsets.ViewSet):
 
     def create(self, request):
         """POST /api/trip-days/ - Create a new day"""
-        serializer = TripDaySerializer(data=request.data)
-
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         trip_id = request.data.get('trip_id')
         if not trip_id:
             return Response(
@@ -684,12 +676,17 @@ class TripDayViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        day = TripDayService.create_day(
-            int(trip_id), serializer.validated_data)
-        return Response(
-            TripDaySerializer(day).data,
-            status=status.HTTP_201_CREATED
-        )
+        try:
+            day = TripDayService.create_day(int(trip_id))
+            return Response(
+                TripDaySerializer(day).data,
+                status=status.HTTP_201_CREATED
+            )
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     def update(self, request, pk=None):
         """PUT /api/trip-days/{id}/ - Update a day"""
