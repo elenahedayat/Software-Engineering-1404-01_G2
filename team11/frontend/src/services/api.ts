@@ -1,7 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import {
     DestinationSuggestRequest,
-    DestinationSuggestResponse
+    DestinationSuggestResponse,
+    ItemAlternativesResponse
 } from '@/types/trip';
 import {
     CreateTripPayload,
@@ -136,6 +137,12 @@ export const tripItemApi = {
         new_item: TripItem;
     }>> => 
         api.post(`/items/${itemId}/replace/`, data),
+
+    // Get Item Alternatives
+    getAlternatives: (itemId: number, maxResults?: number): Promise<AxiosResponse<ItemAlternativesResponse>> => 
+        api.get(`/items/${itemId}/alternatives/`, {
+            params: { max_results: maxResults || 5 }
+        }),
 };
 
 export const tripDayApi = {
