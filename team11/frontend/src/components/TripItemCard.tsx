@@ -35,7 +35,7 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
                 <div className="w-full px-3 py-2 flex items-center justify-between">
                     <button
                         onClick={() => onDelete(item.id)}
-                        className="text-red-400 hover:text-red-500 hover:cursor-pointer transition-colors text-sm flex items-center"
+                        className="text-red-400 hover:text-red-700 hover:cursor-pointer transition-colors text-sm flex items-center"
                         title="حذف"
                     >
                         <i className="fa-solid fa-trash ml-1"></i>
@@ -44,7 +44,7 @@ const TripItemCard: React.FC<TripItemCardProps> = ({
 
                     <button
                         onClick={() => onSuggestAlternative(item.id)}
-                        className="text-persian-gold hover:cursor-pointer transition-colors text-sm flex items-center"
+                        className="text-white hover:text-persian-gold hover:cursor-pointer transition-colors text-sm flex items-center"
                         title="پیشنهاد آیتم جایگزین"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles ml-1"></i>

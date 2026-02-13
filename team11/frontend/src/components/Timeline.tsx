@@ -302,7 +302,7 @@ const Timeline: React.FC<TimelineProps> = ({
     return (
         <div className="mb-12">
             {/* Timeline Header */}
-            <div className="mb-3 text-center pb-1 border-b-2 border-gray-200">
+            <div className="mb-4 text-center pb-1 border-b-2 border-gray-200">
                 <h3 className="text-xl font-bold text-gray-800">{title}</h3>
             </div>
 
@@ -339,8 +339,6 @@ const Timeline: React.FC<TimelineProps> = ({
                 style={{
                     overflowX: 'auto',
                     overflowY: 'visible',
-                    marginLeft: '-150px',
-                    marginRight: '-150px',
                     paddingTop: '10px',
                     paddingBottom: '10px',
                 }}
