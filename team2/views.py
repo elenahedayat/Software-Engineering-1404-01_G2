@@ -257,12 +257,12 @@ def search_articles(request):
 @authentication_classes(AUTH_CLASSES)
 @permission_classes([AllowAny])
 def wiki_content(request):
-    query = request.GET.get("q", "").strip()
-    if not query:
-        return Response({"detail": "Query parameter 'q' is required."}, status=400)
+    content = request.GET.get("content", "").strip()
+    if not content:
+        return Response({"detail": "Query parameter 'content' is required."}, status=400)
 
     try:
-        results = search_articles_semantic(query, size=1)
+        results = search_articles_semantic(content, size=1)
     except Exception as e:
         return Response(
             {"detail": f"Search service unavailable: {e}"},

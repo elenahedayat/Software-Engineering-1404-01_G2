@@ -22,5 +22,5 @@ urlpatterns = [
     path("api/publish-requests/mine/<str:article_name>/", views.my_publish_requests, name="team2-my-publish-requests"),
     path("api/publish-requests/<int:pk>/approve/", views.approve_publish_request, name="team2-approve-publish-request"),
     path("api/publish-requests/<int:pk>/reject/", views.reject_publish_request, name="team2-reject-publish-request"),
-    path("wiki/content/", views.wiki_content, name="team2-wiki-content"),
+    path("api/wiki/", views.wiki_content, name="team2-wiki-content"),
 ]
