@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from team4.models import Facility, City, Province, Category, Amenity, Village
 
 class Command(BaseCommand):
-    help = 'Displays statistics for all imported data'
+    help = 'Displays a clean summary of imported data counts'
 
     def add_arguments(self, parser):
         parser.add_argument('--database', type=str, default='team4')
@@ -10,10 +10,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         db = options['database']
 
-        self.stdout.write(self.style.MIGRATE_HEADING('\n📊 --- Database Statistics ---'))
+        self.stdout.write(self.style.MIGRATE_HEADING('\n📊 DATABASE IMPORT SUMMARY'))
+        self.stdout.write('==========================================')
 
-        # Define the models to count
-        stats = [
+        # 1. Infrastructure Stats
+        infra_stats = [
             ('Provinces', Province),
             ('Cities', City),
             ('Villages', Village),
@@ -21,24 +22,24 @@ class Command(BaseCommand):
             ('Amenities', Amenity),
         ]
 
-        # 1. Show Infrastructure Stats
-        for label, model in stats:
+        for label, model in infra_stats:
             count = model.objects.using(db).count()
-            self.stdout.write(f'{label:12}: {count}')
+            self.stdout.write(f' {label:15} | {count:6} records')
 
-        self.stdout.write(self.style.MIGRATE_HEADING('\n🏥 --- Facilities Breakdown ---'))
+        self.stdout.write('------------------------------------------')
 
-        # 2. Show Facility breakdown by Category
-        facilities = Facility.objects.using(db).all()
-        total_facilities = facilities.count()
+        # 2. Facilities Breakdown
+        all_facilities = Facility.objects.using(db).all()
+        total_count = all_facilities.count()
 
-        # Breakdown by categories found in the database
-        facility_types = Category.objects.using(db).all()
+        # Get categories that actually have facilities linked to them
+        categories = Category.objects.using(db).all()
         
-        for cat in facility_types:
-            count = facilities.filter(category=cat).count()
+        for cat in categories:
+            count = all_facilities.filter(category=cat).count()
             if count > 0:
-                self.stdout.write(f'{cat.name_fa:12}: {count} ({cat.name_en})')
+                # Displays: "Museums (موزه): 45"
+                self.stdout.write(f' {cat.name_en:15} | {count:6} ({cat.name_fa})')
 
-        self.stdout.write(self.style.SUCCESS(f'\nTotal Facilities: {total_facilities}'))
-        self.stdout.write(self.style.MIGRATE_HEADING('-----------------------------\n'))
+        self.stdout.write('==========================================')
+        self.stdout.write(self.style.SUCCESS(f' TOTAL FACILITIES LOADED: {total_count}\n'))
