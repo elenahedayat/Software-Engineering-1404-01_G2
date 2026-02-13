@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api';
+import { RouteResponse } from '../data/types';
 
 const NAVIGATION_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.TEAM_PREFIX}/api/navigation/route/`;
 const REGIONS_URL = `${API_CONFIG.BASE_URL}${API_CONFIG.TEAM_PREFIX}/api/regions/search`;
@@ -12,27 +13,6 @@ export interface SearchResult {
   lng: number;
   address?: string;
   category?: string;
-}
-
-export interface RouteStep {
-  distance: number; // meters
-  duration: number; // seconds
-  instruction: string;
-  name: string;
-}
-
-export interface RouteResponse {
-  routes: Array<{
-    overview_polyline: {
-      points: string;
-    };
-    legs: Array<{
-      distance: { value: number; text: string };
-      duration: { value: number; text: string };
-      steps: RouteStep[];
-    }>;
-  }>;
-  internal_air_distance_km?: number;
 }
 
 export const routingService = {

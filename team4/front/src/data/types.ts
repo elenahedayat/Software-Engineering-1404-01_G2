@@ -1,3 +1,7 @@
+export interface RouteResponse {
+  routes: Route[]
+}
+
 export interface Route {
   overview_polyline: OverviewPolyline
   legs: Leg[]

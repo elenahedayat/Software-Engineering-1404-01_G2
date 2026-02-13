@@ -47,7 +47,7 @@ export default function FavoritesPanel({
             return (
             <div
               key={favorite.favorite_id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="border-2 border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex">
                 {detail.primary_image && (
@@ -58,7 +58,7 @@ export default function FavoritesPanel({
                   />
                 )}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-gray-800 truncate">
                       {detail.name_fa}
                     </h3>
@@ -70,8 +70,8 @@ export default function FavoritesPanel({
                     </button>
                   </div>
 
-                  <div className="flex items-center text-sm text-gray-600 mb-2">
-                    <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+                  <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
+                    <MapPin className="w-4 h-4 flex-shrink-0" />
                     <span className="truncate">{detail.city}, {detail.province}</span>
                   </div>
 
@@ -79,8 +79,8 @@ export default function FavoritesPanel({
                     <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded capitalize">
                       {detail.category}
                     </span>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-500 fill-current mr-1" />
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-yellow-500 fill-current" />
                       <span className="text-sm font-medium text-gray-800">
                         {detail.avg_rating}
                       </span>

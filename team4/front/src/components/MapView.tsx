@@ -135,7 +135,7 @@ export default function MapView({
       {sourceMarker && (
         <Marker position={sourceMarker} icon={sourceIcon}>
           <Popup>
-            <div className="text-sm font-semibold">مبدا</div>
+            <div className="text-sm text-center font-semibold">مبدا</div>
           </Popup>
         </Marker>
       )}
@@ -143,7 +143,7 @@ export default function MapView({
       {destinationMarker && (
         <Marker position={destinationMarker} icon={destinationIcon}>
           <Popup>
-            <div className="text-sm font-semibold">مقصد</div>
+            <div className="text-sm text-center font-semibold">مقصد</div>
           </Popup>
         </Marker>
       )}
@@ -157,7 +157,6 @@ export default function MapView({
       )}
 
       {/* <Polyline positions={decoded} color='red'/> */}
-      <Routing />
 
       <MapCenterListener onFindPlaces={onFindNearbyPlaces} />
     </MapContainer>

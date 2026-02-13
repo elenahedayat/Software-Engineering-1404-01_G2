@@ -15,10 +15,9 @@ import RoutingPanel from './components/RoutingPanel';
 import FavoritesPanel from './components/FavoritesPanel';
 import { Place } from './data/mockPlaces';
 import placesService from './services/placesService';
-import { Route } from './data/types';
 import polyline from "@mapbox/polyline";
-import MapCenterListener from './components/MapCenterListener';
 import { favoritesService, FavoritePlace } from './services/favoritesService';
+import { RouteResponse } from './data/types';
 
 function App() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([35.729054, 51.42047]);
@@ -172,11 +171,13 @@ function App() {
   };
 
   const handleRouteCalculated = (
-    calculatedRoute: Route,
+    calculatedRoute: RouteResponse,
     source: [number, number],
     destination: [number, number]
   ) => {
-    setRoute(polyline.decode(calculatedRoute.overview_polyline.points));
+    setRoute(polyline.decode(calculatedRoute.routes[0].overview_polyline.points));
+    console.log(calculatedRoute);
+    console.log(polyline.decode(calculatedRoute.routes[0].overview_polyline.points));
     setSourceMarker(source);
     setDestinationMarker(destination);
     const midLat = (source[0] + destination[0]) / 2;
@@ -375,7 +376,7 @@ function App() {
                     <button
                     key={place.id}
                     onClick={() => handlePlaceSelect(place)}
-                    className="w-full text-start p-3 border border-gray-200 rounded-lg hover:border-orange-500 hover:shadow-md transition-all"
+                    className="w-full text-start p-3 border-2 border-gray-200 rounded-xl hover:border-orange-500 hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <img
