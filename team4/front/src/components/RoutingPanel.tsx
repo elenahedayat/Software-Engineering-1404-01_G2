@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Navigation, MapPin, Clock, X, Building2, MapPinned, ArrowLeft } from 'lucide-react';
-import { routingService, SearchResult, RouteResponse } from '../services/routingService';
+import { Navigation, MapPin, Clock, X, Building2, MapPinned, ArrowLeft, Route, Waypoints, WaypointsIcon, LucideWaypoints } from 'lucide-react';
+import { routingService, SearchResult } from '../services/routingService';
+import { RouteResponse } from '../data/types';
 
 interface RoutingPanelProps {
   onRouteCalculated: (
-    route: any,
+    route: RouteResponse,
     source: [number, number],
     destination: [number, number]
   ) => void;
@@ -102,13 +103,13 @@ export default function RoutingPanel({ onRouteCalculated, onClose }: RoutingPane
   const getResultIcon = (type: string) => {
     switch (type) {
       case 'facility':
-        return <Building2 className="w-4 h-4" />;
+        return <Building2 className="w-5 h-5" />;
       case 'city':
       case 'province':
       case 'village':
-        return <MapPinned className="w-4 h-4" />;
+        return <MapPinned className="w-5 h-5" />;
       default:
-        return <MapPin className="w-4 h-4" />;
+        return <MapPin className="w-5 h-5" />;
     }
   };
 
@@ -161,15 +162,15 @@ export default function RoutingPanel({ onRouteCalculated, onClose }: RoutingPane
                 <button
                   key={index}
                   onClick={() => handleSourceSelect(result)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-start gap-3"
+                  className="w-full text-start px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                 >
                   <div className="flex-shrink-0 mt-0.5 text-gray-500">
                     {getResultIcon(result.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-800 truncate">{result.name}</div>
+                    <div className="font-bold text-gray-800 truncate">{result.name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-blue-600">{getResultTypeLabel(result.type)}</span>
+                      <span className="text-xs font-bold text-blue-600">{getResultTypeLabel(result.type)}</span>
                       {result.address && (
                         <span className="text-xs text-gray-500 truncate">{result.address}</span>
                       )}
@@ -199,15 +200,15 @@ export default function RoutingPanel({ onRouteCalculated, onClose }: RoutingPane
                 <button
                   key={index}
                   onClick={() => handleDestSelect(result)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-start gap-3"
+                  className="w-full text-start px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                 >
                   <div className="flex-shrink-0 mt-0.5 text-gray-500">
                     {getResultIcon(result.type)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-800 truncate">{result.name}</div>
+                    <div className="font-bold text-gray-800 truncate">{result.name}</div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-blue-600">{getResultTypeLabel(result.type)}</span>
+                      <span className="text-xs font-bold text-blue-600">{getResultTypeLabel(result.type)}</span>
                       {result.address && (
                         <span className="text-xs text-gray-500 truncate">{result.address}</span>
                       )}
@@ -222,8 +223,9 @@ export default function RoutingPanel({ onRouteCalculated, onClose }: RoutingPane
         <button
           onClick={handleCalculateRoute}
           disabled={!selectedSource || !selectedDest || isCalculating}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
+          <Waypoints className="w-6 h-6" />
           {isCalculating ? 'در حال محاسبه...' : 'محاسبه مسیر'}
         </button>
       </div>
@@ -248,17 +250,19 @@ export default function RoutingPanel({ onRouteCalculated, onClose }: RoutingPane
           <h3 className="font-semibold text-gray-800 mb-3">مراحل مسیر</h3>
           <div className="space-y-3">
             {currentRoute.routes[0].legs[0].steps.map((step, index) => (
-              <div key={index} className="flex items-start p-3 gap-3 bg-green-50 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-lg font-bold">
+              <div key={index} className="flex items-center p-3 gap-3 bg-green-50 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-end justify-center text-lg font-bold">
                   {index + 1}
                 </div>
                 <div className="flex-1">
                   <p className="text-gray-800 mb-1">{step.instruction || step.name}</p>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <span>{step.distance}</span>
-                    <ArrowLeft className="w-3 h-3 mx-2" />
-                    <span>{step.duration}</span>
-                  </div>
+                  {step.distance.text && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <span>{step.distance.text}</span>
+                      <ArrowLeft className="w-3 h-3 mx-2" />
+                      <span>{step.duration.text}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

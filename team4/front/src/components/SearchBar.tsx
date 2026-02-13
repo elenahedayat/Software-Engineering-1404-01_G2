@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, X } from 'lucide-react';
+import { MapPin, MapPinned, Search, X } from 'lucide-react';
 import placesService from '../services/placesService';
 
 interface SearchBarProps {
@@ -79,7 +79,7 @@ export default function SearchBar({ onLocationSelect, onPlaceSelect }: SearchBar
 
   return (
     <div className="relative w-full">
-      <div className="flex items-center w-full px-4 gap-2 border-2 border-gray-300 rounded-lg focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
+      <div className="flex items-center w-full px-4 gap-2 border-2 border-gray-300 rounded-xl focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500 focus-within:border-transparent">
         <Search className="transform text-green-500 w-6 h-6" />
         <input
           type="text"
@@ -99,7 +99,7 @@ export default function SearchBar({ onLocationSelect, onPlaceSelect }: SearchBar
       </div>
 
       {showResults && (
-        <div className="absolute top-full mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-80 overflow-y-auto z-50">
+        <div className="absolute top-full mt-2 px-4 w-full bg-white rounded-xl shadow-lg border-2 border-gray-200 max-h-80 overflow-y-auto z-50">
           {isSearching ? (
             <div className="px-4 py-3 text-center text-gray-500">
               <div className="inline-flex items-center gap-2">
@@ -112,10 +112,10 @@ export default function SearchBar({ onLocationSelect, onPlaceSelect }: SearchBar
               <button
                 key={result.fac_id}
                 onClick={() => handleSelect(result)}
-                className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                className="w-full text-left px-4 py-3 hover:bg-gray-100 border-b border-gray-300 last:border-b-0 transition-colors"
               >
-                <div className="flex items-center">
-                  <Search className="w-4 h-4 text-gray-400 mr-3" />
+                <div className="flex items-center gap-3">
+                  <MapPinned className="w-6 h-6 text-gray-500" />
                   <span className="text-gray-800">{result.name}</span>
                 </div>
               </button>
