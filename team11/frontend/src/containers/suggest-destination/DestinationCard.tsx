@@ -13,7 +13,6 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
   reason,
   highlights,
   description,
-  categories,
   style,
   interests,
   image,
