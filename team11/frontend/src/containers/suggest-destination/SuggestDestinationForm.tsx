@@ -5,15 +5,17 @@ import Button from '../../components/ui/Button';
 import ChipButton from '@/components/ui/ChipButton';
 import TextField from '@/components/ui/TextField';
 import { useApi } from '@/hooks/useApi';
-import { getMockDestinations } from '@/services/mockService';
+import { destinationApi } from '@/services/api';
 import {
     TRAVEL_SEASONS,
     TRAVEL_STYLES,
     GEOGRAPHIC_REGIONS,
     INITIAL_INTERESTS,
+    BUDGET_LEVELS,
 } from './constants';
 import DestinationCard from './DestinationCard';
 import { PROVINCES_DETAILS } from '@/constants';
+import { useNotification } from '@/contexts/NotificationContext';
 
 const SuggestDestinationForm = () => {
     const navigate = useNavigate();
@@ -28,25 +30,32 @@ const SuggestDestinationForm = () => {
         style: null,
         region: null,
     });
-    
+
     const [availableInterests, setAvailableInterests] = useState(INITIAL_INTERESTS);
     const [selectedInterestValues, setSelectedInterestValues] = useState<string[]>([]);
     const [isAdding, setIsAdding] = useState(false);
     const [newInterestLabel, setNewInterestLabel] = useState('');
 
     // useApi configured to reset data on new load for a cleaner UX
-    const { isLoading, request, data: destinationsData } = useApi(getMockDestinations, { resetDataOnLoading: true });
+    const { isLoading, request, data: destinationsData } = useApi(destinationApi.suggest, { resetDataOnLoading: true });
+
+    const { success: showSuccess, error: showError } = useNotification();
 
     // Valid if at least one selection is made or an interest is chosen
     const isFormValid = Object.values(formData).some(val => val !== null) || selectedInterestValues.length > 0;
 
     // Mapping API results to Province Details (Image and Persian Name)
     const destinations = destinationsData?.suggestions.map((item: { province: string }) => {
-        const provinceKey = item.province.toLowerCase() as keyof typeof PROVINCES_DETAILS;
-        const detail = PROVINCES_DETAILS[provinceKey];
+        // Find the English province key by matching Persian name
+        const provinceEntry = Object.entries(PROVINCES_DETAILS).find(
+            ([, detail]) => detail.name === item.province
+        );
+        const provinceKey = provinceEntry ? provinceEntry[0] : item.province;
+        const detail = provinceEntry ? provinceEntry[1] : undefined;
 
         return {
             ...item,
+            province: provinceKey,
             name: detail?.name || item.province,
             image: detail?.image
         };
@@ -93,20 +102,21 @@ const SuggestDestinationForm = () => {
     const handleSubmit = async () => {
         const payload = {
             ...formData,
-            interests: selectedInterestValues
+            interests: selectedInterestValues,
+            budget_level: BUDGET_LEVELS[1].value
         };
-
-        console.log(payload)
 
         try {
             await request(payload);
-        } catch (err) {
-            console.error("Submission failed", err);
+            showSuccess('مقاصد با موفقیت دریافت شدند!');
+        } catch (error) {
+            console.error('Failed to fetch destinations:', error);
+            showError('خطا در دریافت مقاصد. لطفاً دوباره تلاش کنید.');
         }
     };
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-10">
+        <div className="w-full max-w-5xl mx-auto p-8">
             {/* Header */}
             <div className="flex items-center justify-center mb-16 relative w-full">
                 <div className="section-header !mb-0 text-center">

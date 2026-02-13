@@ -1,19 +1,26 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
+import { DestinationSuggestion } from '@/types/trip';
 
-interface DestinationCardProps {
-  province: string;
-  name: string;
-  summary: string;
-  url: string;
-  image?: string;
+interface DestinationCardProps extends DestinationSuggestion {
   style?: string | null;
   interests?: string[];
+  image?: string
 }
 
-const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summary, url, image, style, interests }) => {
+const DestinationCard: React.FC<DestinationCardProps> = ({
+  province,
+  city,
+  reason,
+  highlights,
+  description,
+  categories,
+  style,
+  interests,
+  image,
+}) => {
   const params = new URLSearchParams();
   params.set('province', province);
+  params.set('city', city);
   if (style) params.set('style', style);
   if (interests && interests.length) params.set('interests', interests.join(','));
   const destinationPath = `/create-trip?${params.toString()}`;
@@ -21,7 +28,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summa
   return (
     <div className="group relative flex flex-col bg-[#E0E0E0] rounded-2xl shadow-sm border border-white/60 transition-all duration-300 hover:shadow-2xl overflow-hidden h-full">
 
-      {/* 1. Image Area - Set to object-contain to avoid cropping */}
+      {/* 1. Image Area - Placeholder only, as image is not in API */}
       <div className="relative h-48 w-full bg-[#E0E0E0] overflow-hidden py-2">
         {image ? (
           <img
@@ -42,28 +49,38 @@ const DestinationCard: React.FC<DestinationCardProps> = ({ province, name, summa
         {/* Gradient Side Accent - Positioned specifically next to the text area */}
         <div className="absolute right-0 top-12 bottom-6 w-1 bg-gradient-to-b from-persian-gold to-tile-cyan opacity-80 group-hover:opacity-100 transition-opacity" />
 
-        {/* Province Title Tag */}
-        <div className="bg-[#BDBDBD] text-text-dark px-8 py-2 rounded-lg text-xl font-black w-fit mx-auto mb-4 shadow-md group-hover:bg-persian-gold group-hover:text-white transition-colors">
-          {name || province}
+        {/* City Title Tag (province removed) */}
+        <div className="bg-[#BDBDBD] text-text-dark px-8 py-2 rounded-lg text-xl font-black w-fit mx-auto mb-4 shadow-md group-hover:bg-persian-blue group-hover:text-white transition-colors">
+          {city}
         </div>
 
-        {/* Summary */}
-        <p className="text-mountain-grey text-sm font-medium leading-relaxed text-justify dir-rtl mb-6 pr-2">
-          {summary}
+        {/* Description */}
+        <p className="text-mountain-grey text-sm font-medium leading-relaxed text-justify dir-rtl mb-2 pr-2">
+          {description}
         </p>
+        {/* Separator */}
+        <hr className="my-2 border-t border-gray-300" />
+        {/* Reason */}
+        <p className="text-persian-blue text-xs font-bold mb-4 pr-2">
+          {reason}
+        </p>
+        {/* Highlights */}
+        <div className="mb-4">
+          <span className="font-bold text-xs text-forest-green">جاذبه‌ها:</span>
+          <ul className="list-disc list-inside text-xs text-forest-green">
+            {highlights.map((h, idx) => (
+              <li key={idx}>{h}</li>
+            ))}
+          </ul>
+        </div>
+        {/* Categories */}
+        <div className="mb-2">
+          <span className="font-bold text-xs">دسته‌بندی‌ها:</span>
+          <span className="text-xs text-mountain-grey ms-2">{categories.join(', ')}</span>
+        </div>
+        {/* Removed Best Season, Score, Cost, Duration */}
 
-        <div className='flex justify-between mt-auto items-center'>
-          {url && <span>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-text-dark font-bold text-xs opacity-70 hover:opacity-100 hover:text-tile-cyan transition-all"
-            >
-              مطالعه بیشتر
-            </a>
-          </span>}
-
+        <div className='flex justify-end mt-auto items-center'>
           <span className='ms-auto'>
             <Link
               to={destinationPath}
