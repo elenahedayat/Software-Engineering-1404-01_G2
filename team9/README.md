@@ -64,8 +64,12 @@ This module is maintained by **Team 9**. For any feature requests or bug reports
 
 **Developed with ❤️ by Team 9**
 *Part of the Software Engineering Course - Winter 1404*
-👨‍💻 @mr-mobasheri
-👨‍💻 @alinourbakhsh2020
-👨‍💻 @Amyr-333
-👨‍💻 @M-Rafi-Hd
+
+👨‍💻 [@mr-mobasheri](https://github.com/mr-mobasheri)
+
+👨‍💻 [@alinourbakhsh2020](https://github.com/alinourbakhsh2020)
+
+👨‍💻 [@Amyr-333](https://github.com/Amyr-333)
+
+👨‍💻 [@M-Rafi-Hd](https://github.com/M-Rafi-Hd)
 
